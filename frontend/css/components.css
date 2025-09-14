@@ -1,0 +1,309 @@
+:root {
+  --bar-h: 64px; /* Bottom bar height */
+}
+
+/* --------------------
+   TOPBAR
+-------------------- */
+.mc-topbar {
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.mc-topbar .mc-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+/* Brand text/logo */
+.mc-topbar .brand {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+/* Hamburger (mobile only) */
+.hamburger {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-accent);
+}
+
+/* Language switch */
+.lang-switch {
+  display: flex;
+  gap: 10px;
+}
+
+.lang-switch button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+}
+
+.lang-switch button[aria-pressed="true"] {
+  text-decoration: underline;
+}
+
+/* --------------------
+   Responsive Behavior
+-------------------- */
+
+/* Mobile (<=768px) */
+@media (max-width: 768px) {
+  .mc-topbar .mc-wrap {
+    justify-content: center; /* center everything */
+  }
+
+  .brand {
+    position: relative;
+    text-align: center;
+  }
+
+  .lang-switch {
+    position: absolute;
+    right: var(--spacing-3);
+  }
+
+  .hamburger {
+    position: absolute;
+    left: var(--spacing-3);
+    display: block; /* visible on mobile */
+  }
+}
+
+/* Desktop (>768px) */
+@media (min-width: 769px) {
+  .hamburger {
+    display: none; /* hide hamburger */
+  }
+
+  .mc-topbar .mc-wrap {
+    justify-content: flex-start; /* align left */
+    gap: var(--spacing-3);
+  }
+
+  .lang-switch {
+    margin-left: auto; /* push to right */
+  }
+}
+
+
+
+/* Bottom bar wrapper */
+.mc-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: space-around;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-muted);
+  height: calc(var(--bar-h) + env(safe-area-inset-bottom));
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom)) 4px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,.06);
+}
+
+/* Each tab */
+.mc-tab {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  padding: 6px 4px;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+/* Icon inside tab */
+.mc-ico {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Label inside tab */
+.mc-lbl {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Hover (mouse over) */
+.mc-tab:hover {
+  background: #f0f4ff;
+  color: var(--color-accent);
+}
+
+/* Focus (keyboard navigation) */
+.mc-tab:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Active (while pressing) */
+.mc-tab:active {
+  background: #e0e7ff;
+  transform: scale(0.97);
+}
+
+/* Selected/active tab (after click) */
+.mc-tab.active {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.mc-tab.active .mc-ico {
+  font-size: 22px; /* slight bump for emphasis */
+}
+
+/* Prevent content being hidden behind the bar */
+main, .page {
+  padding-bottom: calc(var(--bar-h) + 16px + env(safe-area-inset-bottom));
+}
+
+.mc-ico {
+  font-size: 1.4rem;
+  line-height: 1;
+  color: currentColor;
+}
+
+
+/* Hide on desktop */
+@media (min-width: 769px) {
+  .mc-bottom-bar {
+    display: none;
+  }
+}
+
+/* Language switch buttons */
+.lang-switch {
+  display: flex;
+  gap: 10px;
+}
+
+.lang-switch button {
+  border: 1px solid var(--color-muted);
+  background: var(--color-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+/* Hover */
+.lang-switch button:hover {
+  background: #f0f4ff;
+  color: var(--color-accent);
+}
+
+/* Focus (keyboard navigation) */
+.lang-switch button:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Active (while pressing) */
+.lang-switch button:active {
+  background: #e0e7ff;
+  transform: scale(0.96);
+}
+
+/* Selected/active language */
+.lang-switch button[aria-pressed="true"] {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+
+/* --------------------
+   SIDE MENU (MOBILE)
+-------------------- */
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: -300px; /* hide menu fully (wider than 260px) */
+  width: 260px;
+  height: 100%;
+  background: #fff;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+  padding: var(--spacing-4) var(--spacing-3);
+  transition: left 0.3s ease;
+  z-index: 2000;
+}
+
+
+.side-menu.active {
+  left: 0; /* slide in */
+}
+
+.side-menu .close-btn {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+}
+
+.side-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+}
+
+.side-menu li {
+  margin-bottom: var(--spacing-2);
+}
+
+.side-menu a {
+  text-decoration: none;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  display: block;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+
+.side-menu a:hover {
+  color: #0018b8;
+}
+
+/* Hide visually but keep for screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+
+/* Hide side menu on desktop */
+@media (min-width: 769px) {
+  .side-menu {
+    display: none;
+  }
+}

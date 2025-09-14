@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <title>MedConnect</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="mc-topbar">
+  <div class="mc-wrap">
+    <button class="hamburger" aria-label="Open menu">≡</button>
+    <a href="index.html" class="brand">MedConnect</a>
+    <div class="lang-switch">
+      <button data-lang="en" aria-pressed="true">EN</button>
+      <button data-lang="fr" aria-pressed="false">FR</button>
+    </div>
+  </div>
+</header>
+
+<!-- Overlay -->
+<div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
+
+<!-- Side menu as modal navigation drawer -->
+<nav class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sideMenuTitle">
+  <button class="close-btn" id="closeMenu" aria-label="Close menu">×</button>
+  <h2 id="sideMenuTitle" class="visually-hidden" data-i18n="nav_menu">Main Menu</h2>
+  <ul>
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+    <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+    <li><a href="labs.html" data-i18n="qa_lab">Lab Tests</a></li>
+    <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+    <li><a href="portal.html" data-i18n="qa_portal">Patient Portal</a></li>
+    <li><a href="about.html" data-i18n="link_about">About</a></li>
+    <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
+    <li><a href="notices.html" data-i18n="nav_notices">Notices</a></li>
+    <li><a href="privacy.html" data-i18n="privacy">Privacy Policy</a></li>
+    <li><a href="terms.html" data-i18n="terms">Terms of Service</a></li>
+  </ul>
+</nav>
+
+
+
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <picture>
+      <source media="(max-width: 768px)" srcset="assets/img/hero-mobile.png">
+      <img src="assets/img/hero-desktop.jpg" alt="Doctor and patient consultation" class="hero-img">
+    </picture>
+
+    <div class="hero-slogan">
+      <h1 data-i18n="hero_title">Your care, <br>connected.</h1>
+    </div>
+
+    <div class="hero-ctas">
+      <a href="appointment.html" class="btn primary" data-i18n="cta_book">Book an appointment</a>
+      <a href="doctors.html" class="btn ghost" data-i18n="link_find_doctor">Find a doctor</a>
+    </div>
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="quick-actions">
+    <div class="container">
+      <div class="qa-grid">
+      <a href="doctors.html" class="qa-card">
+        <i class="fi fi-rr-stethoscope qa-ico"></i>
+        <span class="qa-title" data-i18n="qa_doctors">Doctors</span>
+      </a>
+      <a href="specialties.html" class="qa-card">
+        <i class="fi fi-rr-hospital qa-ico"></i>
+        <span class="qa-title" data-i18n="qa_specialties">Specialties</span>
+      </a>
+      <a href="labs.html" class="qa-card">
+        <i class="fi fi-rr-test-tube qa-ico"></i>
+        <span class="qa-title" data-i18n="qa_lab">Lab Tests</span>
+      </a>
+      <a href="pharmacy.html" class="qa-card">
+        <i class="fi fi-rr-capsules qa-ico"></i>
+        <span class="qa-title" data-i18n="qa_pharmacy">Pharmacy</span>
+      </a>
+      <a href="portal.html" class="qa-card full">
+        <i class="fi fi-rr-lock qa-ico"></i>
+        <span class="qa-title" data-i18n="qa_portal">Patient Portal</span>
+      </a>
+      </div>
+    </div>
+    
+  </section>
+
+  <!-- Why MedConnect -->
+  <section class="why-medconnect">
+    <div class="container">
+      <h2 data-i18n="why_title">Why MedConnect?</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <i class="fi fi-rr-shield-check why-ico"></i>
+          <p data-i18n="why_secure">Secure patient records</p>
+        </div>
+        <div class="why-card">
+          <i class="fi fi-rr-calendar why-ico"></i>
+          <p data-i18n="why_booking">Easy appointment booking</p>
+        </div>
+        <div class="why-card">
+          <i class="fi fi-rr-clock why-ico"></i>
+          <p data-i18n="why_monitoring">Real-time monitoring</p>
+        </div>
+        <div class="why-card">
+          <i class="fi fi-rr-globe why-ico"></i>
+          <p data-i18n="why_bilingual">Bilingual support (EN/FR)</p>
+        </div>
+      </div>
+    </div>
+    
+  </section>
+
+  <!-- Featured Doctors -->
+  <section class="featured-doctors">
+    <div class="container">
+      <h2 data-i18n="doctors_title">Featured Doctors</h2>
+      <div class="doctors-list">
+        <article class="doctor-card">
+          <img src="assets/img/doc.jpg" alt="Dr. Jane Smith" class="doctor-photo">
+          <h3 data-i18n="doc_smith">Dr. Jane Smith</h3>
+          <p data-i18n="spec_cardiology">Cardiologist</p>
+          <a href="doctors.html?doctor=dr_smith" class="btn ghost" data-i18n="btn_view_profile">View Profile</a>
+        </article>
+        <article class="doctor-card">
+          <img src="assets/img/doc.jpg" alt="Dr. Michael Lee" class="doctor-photo">
+          <h3 data-i18n="doc_lee">Dr. Michael Lee</h3>
+          <p data-i18n="spec_dermatology">Dermatologist</p>
+          <a href="doctors.html?doctor=dr_lee" class="btn ghost" data-i18n="btn_view_profile">View Profile</a>
+        </article>
+        <article class="doctor-card">
+          <img src="assets/img/doc.jpg" alt="Dr. Aisha Patel" class="doctor-photo">
+          <h3 data-i18n="doc_patel">Dr. Aisha Patel</h3>
+          <p data-i18n="spec_pediatrics">Pediatrician</p>
+          <a href="doctors.html?doctor=dr_patel" class="btn ghost" data-i18n="btn_view_profile">View Profile</a>
+        </article>
+      </div>
+    </div>
+    
+  </section>
+
+  <!-- Notices -->
+  <section class="notices">
+    <div class="container">
+      <h2 data-i18n="notices_title">Notices & Tips</h2>
+      <div class="notices-list">
+        <div class="notice-card">
+          <i class="fi fi-rr-syringe"></i>
+          <p data-i18n="notice_flu">Flu shots available this week.</p>
+        </div>
+        <div class="notice-card">
+          <i class="fi fi-rr-test-tube"></i>
+          <p data-i18n="notice_lab">Lab open on Saturday from 8:00–12:00.</p>
+        </div>
+        <div class="notice-card">
+          <i class="fi fi-rr-mobile-notch"></i>
+          <p data-i18n="notice_app">Download our MedConnect app for easier booking.</p>
+        </div>
+      </div>
+    </div>
+    
+  </section>
+</main>
+
+<!-- Bottom Nav -->
+<nav class="mc-bottom-bar" role="navigation" aria-label="Quick actions">
+  <a href="appointment.html" class="mc-tab" aria-label="Book an appointment">
+    <i class="fi fi-rr-calendar mc-ico"></i>
+    <span class="mc-lbl" data-i18n="cta_book">Book</span>
+  </a>
+  <a href="doctors.html" class="mc-tab" aria-label="Find a doctor">
+    <i class="fi fi-rr-stethoscope mc-ico"></i>
+    <span class="mc-lbl" data-i18n="link_find_doctor">Doctors</span>
+  </a>
+  <a href="labs.html" class="mc-tab" aria-label="Lab services">
+    <i class="fi fi-rr-test-tube mc-ico"></i>
+    <span class="mc-lbl" data-i18n="qa_lab">Labs</span>
+  </a>
+</nav>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h3 data-i18n="footer_contact">Contact</h3>
+      <p><i class="fi fi-rr-phone-call"></i> +230 123 4567</p>
+      <p><i class="fi fi-rr-envelope"></i> info@medconnect.mu</p>
+      <p><i class="fi fi-rr-marker"></i> 123 Health St, Quatre Bornes</p>
+    </div>
+    <div class="footer-col">
+      <h3 data-i18n="footer_links">Quick Links</h3>
+      <ul>
+        <li><a href="#about" data-i18n="link_about">About</a></li>
+        <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+        <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+        <li><a href="labs.html" data-i18n="qa_lab">Labs</a></li>
+        <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3 data-i18n="footer_follow">Follow Us</h3>
+      <div class="footer-socials">
+        <a href="#"><i class="fi fi-rr-facebook"></i></a>
+        <a href="#"><i class="fi fi-rr-linkedin"></i></a>
+        <a href="#"><i class="fi fi-rr-instagram"></i></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2025 MedConnect. <span data-i18n="rights_reserved">All rights reserved.</span></p>
+    <a href="#privacy" data-i18n="privacy">Privacy Policy</a> | 
+    <a href="#terms" data-i18n="terms">Terms of Service</a>
+  </div>
+</footer>
+
+
+
+  <!-- JS -->
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/bottom-bar.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

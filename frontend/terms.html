@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="terms">Terms of Service – MedConnect</title>
+
+  <!-- UIcons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="mc-topbar">
+    <div class="mc-wrap">
+      <button class="hamburger" aria-label="Open menu">≡</button>
+      <a class="brand" href="index.html">MedConnect</a>
+      <div class="lang-switch">
+        <button data-lang="en" aria-pressed="true">EN</button>
+        <button data-lang="fr" aria-pressed="false">FR</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Overlay + Side Menu -->
+  <div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
+  <nav class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sideMenuTitle">
+    <button class="close-btn" id="closeMenu" aria-label="Close menu">×</button>
+    <h2 id="sideMenuTitle" class="visually-hidden" data-i18n="nav_menu">Main Menu</h2>
+    <ul>
+      <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+      <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+      <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+      <li><a href="labs.html" data-i18n="qa_lab">Lab Tests</a></li>
+      <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+      <li><a href="portal.html" data-i18n="qa_portal">Patient Portal</a></li>
+      <li><a href="about.html" data-i18n="link_about">About</a></li>
+      <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
+      <li><a href="notices.html" data-i18n="nav_notices">Notices</a></li>
+      <li><a href="privacy.html" data-i18n="privacy">Privacy Policy</a></li>
+      <li><a href="terms.html" data-i18n="terms">Terms of Service</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="legal-page">
+    <h1 data-i18n="terms">Terms of Service</h1>
+    <p class="intro" data-i18n="terms_page_intro">
+      By using MedConnect, you agree to the following terms and conditions.
+    </p>
+
+    <section>
+      <h2 data-i18n="terms_page_section1_title">Use of Services</h2>
+      <p data-i18n="terms_page_section1_text">
+        MedConnect provides healthcare management tools for patients and providers. You agree to use these services responsibly and in accordance with applicable laws.
+      </p>
+    </section>
+
+    <section>
+      <h2 data-i18n="terms_page_section2_title">User Responsibilities</h2>
+      <p data-i18n="terms_page_section2_text">
+        You are responsible for providing accurate personal information and keeping your login credentials secure.
+      </p>
+    </section>
+
+    <section>
+      <h2 data-i18n="terms_page_section3_title">Limitation of Liability</h2>
+      <p data-i18n="terms_page_section3_text">
+        MedConnect is not liable for any medical outcomes. Services are provided as a platform to connect patients with healthcare providers.
+      </p>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h3 data-i18n="footer_contact">Contact</h3>
+        <p><i class="fi fi-rr-phone-call"></i> +230 123 4567</p>
+        <p><i class="fi fi-rr-envelope"></i> info@medconnect.mu</p>
+        <p><i class="fi fi-rr-marker"></i> 123 Health St, Quatre Bornes</p>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_links">Quick Links</h3>
+        <ul>
+          <li><a href="index.html#about" data-i18n="link_about">About</a></li>
+          <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+          <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+          <li><a href="labs.html" data-i18n="qa_lab">Labs</a></li>
+          <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_follow">Follow Us</h3>
+        <div class="footer-socials">
+          <a href="#"><i class="fi fi-rr-facebook"></i></a>
+          <a href="#"><i class="fi fi-rr-linkedin"></i></a>
+          <a href="#"><i class="fi fi-rr-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 MedConnect. <span data-i18n="rights_reserved">All rights reserved.</span></p>
+      <a href="privacy.html" data-i18n="privacy">Privacy Policy</a> | 
+      <a href="terms.html" data-i18n="terms">Terms of Service</a>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+:root {
+  --color-bg: #ffffff;
+  --color-text: #000000;
+  --color-accent: #0021f5;
+  --color-muted: #d9d9d9;
+
+  --font-base: Helvetica, Arial, sans-serif;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  --line-height-base: 1.5;
+  --line-height-heading: 1.2;
+
+  --radius: 14px;
+  --spacing-1: 8px;
+  --spacing-2: 16px;
+  --spacing-3: 24px;
+  --spacing-4: 32px;
+}

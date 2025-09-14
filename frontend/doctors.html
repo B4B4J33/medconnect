@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find Doctors – MedConnect</title>
+
+  <!-- UIcons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+<!-- Header -->
+<header class="mc-topbar">
+  <div class="mc-wrap">
+    <button class="hamburger" aria-label="Open menu">≡</button>
+    <a href="index.html" class="brand">MedConnect</a>
+    <div class="lang-switch">
+      <button data-lang="en" aria-pressed="true">EN</button>
+      <button data-lang="fr" aria-pressed="false">FR</button>
+    </div>
+  </div>
+</header>
+
+<!-- Overlay -->
+<div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
+
+<!-- Side menu as modal navigation drawer -->
+<nav class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sideMenuTitle">
+  <button class="close-btn" id="closeMenu" aria-label="Close menu">×</button>
+  <h2 id="sideMenuTitle" class="visually-hidden" data-i18n="nav_menu">Main Menu</h2>
+  <ul>
+    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+    <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+    <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+    <li><a href="labs.html" data-i18n="qa_lab">Lab Tests</a></li>
+    <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+    <li><a href="portal.html" data-i18n="qa_portal">Patient Portal</a></li>
+    <li><a href="about.html" data-i18n="link_about">About</a></li>
+    <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
+    <li><a href="notices.html" data-i18n="nav_notices">Notices</a></li>
+    <li><a href="privacy.html" data-i18n="privacy">Privacy Policy</a></li>
+    <li><a href="terms.html" data-i18n="terms">Terms of Service</a></li>
+  </ul>
+</nav>
+
+
+<main class="doctors">
+  <div class="container">
+      <h1 data-i18n="doctors_title">Find a Doctor</h1>
+
+      <!-- Search & Filter -->
+      <div class="doctor-filters">
+        <input type="text" id="doctorSearch" placeholder="" data-i18n-placeholder="search_placeholder">
+        <select id="specialtyFilter">
+          <option value="" data-i18n="filter_all">All Specialties</option>
+          <option value="cardiology" data-i18n="spec_cardiology">Cardiology</option>
+          <option value="dermatology" data-i18n="spec_dermatology">Dermatology</option>
+          <option value="pediatrics" data-i18n="spec_pediatrics">Pediatrics</option>
+        </select>
+      </div>
+
+      <!-- Doctor list -->
+      <div class="doctor-list">
+
+        <article class="doctor-card" data-specialty="cardiology">
+          <img src="assets/img/doc.jpg" alt="Dr. Jane Smith" class="doctor-photo">
+          <h3>Dr. Jane Smith</h3>
+          <p>Cardiologist</p>
+          <a href="doctor.html?id=dr_smith" class="btn ghost">View Profile</a>
+        </article>
+
+        <article class="doctor-card" data-specialty="dermatology">
+          <img src="assets/img/doc.jpg" alt="Dr. Michael Lee" class="doctor-photo">
+          <h3>Dr. Michael Lee</h3>
+          <p>Dermatologist</p>
+          <a href="doctor.html?id=dr_lee" class="btn ghost">View Profile</a>
+        </article>
+
+        <article class="doctor-card" data-specialty="pediatrics">
+          <img src="assets/img/doc.jpg" alt="Dr. Aisha Patel" class="doctor-photo">
+          <h3>Dr. Aisha Patel</h3>
+          <p>Pediatrician</p>
+          <a href="doctor.html?id=dr_patel" class="btn ghost">View Profile</a>
+        </article>
+
+
+      </div>
+  </div>
+
+</main>
+
+<!-- Bottom Nav -->
+<nav class="mc-bottom-bar" role="navigation" aria-label="Quick actions">
+  <a href="appointment.html" class="mc-tab" aria-label="Book an appointment">
+    <i class="fi fi-rr-calendar mc-ico"></i>
+    <span class="mc-lbl" data-i18n="cta_book">Book</span>
+  </a>
+  <a href="doctors.html" class="mc-tab" aria-label="Find a doctor">
+    <i class="fi fi-rr-stethoscope mc-ico"></i>
+    <span class="mc-lbl" data-i18n="link_find_doctor">Doctors</span>
+  </a>
+  <a href="labs.html" class="mc-tab" aria-label="Lab services">
+    <i class="fi fi-rr-test-tube mc-ico"></i>
+    <span class="mc-lbl" data-i18n="qa_lab">Labs</span>
+  </a>
+</nav>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h3 data-i18n="footer_contact">Contact</h3>
+        <p><i class="fi fi-rr-phone-call"></i> +230 123 4567</p>
+        <p><i class="fi fi-rr-envelope"></i> info@medconnect.mu</p>
+        <p><i class="fi fi-rr-marker"></i> 123 Health St, Quatre Bornes</p>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_links">Quick Links</h3>
+        <ul>
+          <li><a href="#about" data-i18n="link_about">About</a></li>
+          <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+          <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+          <li><a href="labs.html" data-i18n="qa_lab">Labs</a></li>
+          <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_follow">Follow Us</h3>
+        <div class="footer-socials">
+          <a href="#"><i class="fi fi-rr-facebook"></i></a>
+          <a href="#"><i class="fi fi-rr-linkedin"></i></a>
+          <a href="#"><i class="fi fi-rr-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 MedConnect. <span data-i18n="rights_reserved">All rights reserved.</span></p>
+      <a href="#privacy" data-i18n="privacy">Privacy Policy</a> | 
+      <a href="#terms" data-i18n="terms">Terms of Service</a>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/bottom-bar.js"></script>
+  <script src="js/doctors.js"></script>
+</body>
+</html>
