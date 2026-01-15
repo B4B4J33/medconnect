@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "./config.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const steps = document.querySelectorAll(".form-step");
   const stepIndicators = document.querySelectorAll(".appt-steps .step");
@@ -6,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("appointmentForm");
   const reviewList = document.getElementById("reviewList");
 
+  // Safety guard (prevents crashes if script is ever loaded on another page)
+  if (!steps.length || !nextBtn || !prevBtn || !form || !reviewList || !stepIndicators.length) return;
+
   let currentStep = 0;
 
   // --- Read doctor & specialty from URL ---
@@ -13,10 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const doctorParam = urlParams.get("doctor");
   const specialtyParam = urlParams.get("specialty");
 
-  if (specialtyParam) {
+  if (specialtyParam && document.getElementById("specialty")) {
     document.getElementById("specialty").value = specialtyParam;
   }
-  if (doctorParam) {
+  if (doctorParam && document.getElementById("doctor")) {
     document.getElementById("doctor").value = doctorParam;
   }
 
@@ -25,11 +30,38 @@ document.addEventListener("DOMContentLoaded", () => {
     currentStep = 1; // start at Step 2 (Date/Time)
   }
 
+  function buildPayload() {
+    return {
+      specialty: form.specialty?.value || "",
+      doctor: form.doctor?.value || "",
+      date: form.date?.value || "",
+      time: form.time?.value || "",
+      name: form.name?.value || "",
+      phone: form.phone?.value || "",
+      email: form.email?.value || "",
+    };
+  }
+
+  async function submitAppointment(payload) {
+    const res = await fetch(`${API_BASE_URL}/api/appointments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error ? `${data.error}${data.missing ? `: ${data.missing.join(", ")}` : ""}` : "Booking failed";
+      throw new Error(msg);
+    }
+    return data;
+  }
+
   // --- Step logic ---
   function showStep(index) {
     steps.forEach((s, i) => {
       s.classList.toggle("active", i === index);
-      stepIndicators[i].classList.toggle("active", i === index);
+      if (stepIndicators[i]) stepIndicators[i].classList.toggle("active", i === index);
     });
 
     prevBtn.style.display = index === 0 ? "none" : "inline-block";
@@ -43,16 +75,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputs = activeStep.querySelectorAll("input[required], select[required]");
     let valid = true;
 
-    inputs.forEach(input => {
-      if (!input.value) {
-        valid = false;
-      }
+    inputs.forEach((input) => {
+      if (!input.value) valid = false;
     });
 
     nextBtn.disabled = !valid;
   }
 
-  nextBtn.addEventListener("click", () => {
+  nextBtn.addEventListener("click", async () => {
     if (currentStep < steps.length - 1) {
       currentStep++;
 
@@ -70,11 +100,31 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       showStep(currentStep);
-    } else {
-      alert("Appointment confirmed! (later: send SMS + save to DB)");
+      return;
+    }
+
+    // Confirm step: send to backend
+    const payload = buildPayload();
+
+    nextBtn.disabled = true;
+    const originalLabel = nextBtn.textContent;
+    nextBtn.textContent = "Submitting...";
+
+    try {
+      await submitAppointment(payload);
+      alert("Appointment booked successfully");
+
       form.reset();
-      currentStep = doctorParam && specialtyParam ? 1 : 0; // reset to first relevant step
+      currentStep = doctorParam && specialtyParam ? 1 : 0;
       showStep(currentStep);
+    } catch (err) {
+      console.error(err);
+      alert(`Error booking appointment${err?.message ? `: ${err.message}` : ""}`);
+      // stay on confirm step so user can fix data
+      showStep(currentStep);
+    } finally {
+      nextBtn.textContent = originalLabel;
+      validateStep(); // re-enable if valid
     }
   });
 
