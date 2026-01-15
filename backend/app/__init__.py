@@ -8,6 +8,9 @@ CORS(app)
 def health():
     return {"status": "ok"}
 
+# In-memory store (demo only, no DB yet)
+APPOINTMENTS = []
+
 @app.route("/api/appointments", methods=["POST"])
 def create_appointment():
     data = request.get_json(silent=True) or {}
@@ -17,5 +20,10 @@ def create_appointment():
     if missing:
         return {"success": False, "error": "Missing fields", "missing": missing}, 400
 
-    # No DB yet — acknowledge receipt
-    return {"success": True, "appointment": data}, 201
+    APPOINTMENTS.append(data)
+    return {"success": True}, 201
+
+# Optional but VERY useful for testing in browser
+@app.route("/api/appointments", methods=["GET"])
+def list_appointments():
+    return {"count": len(APPOINTMENTS), "items": APPOINTMENTS}, 200
