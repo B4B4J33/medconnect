@@ -1,16 +1,19 @@
-from flask import Flask, request
+from flask import Flask
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# --------------------
-# Health check
-# --------------------
+from app.routes.appointments import appointments_bp
+app.register_blueprint(appointments_bp)
+
+
+from app.routes.doctors import doctors_bp
+app.register_blueprint(doctors_bp)
+
 @app.route("/api/health", methods=["GET"])
 def health():
     return {"status": "ok"}, 200
-
 
 # --------------------
 # In-memory storage (demo only)
