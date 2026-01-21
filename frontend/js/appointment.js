@@ -1,4 +1,5 @@
-import { API_BASE_URL } from "./config.js";
+const API_BASE_URL = window.API_BASE_URL;
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const steps = document.querySelectorAll(".form-step");
