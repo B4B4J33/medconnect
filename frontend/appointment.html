@@ -7,185 +7,176 @@
 
   <!-- UIcons -->
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
-<!-- CSS -->
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/components.css">
-<link rel="stylesheet" href="css/layout.css">
-<link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/pages.css">
 
-
-<!-- JS -->
-<script src="js/config.js"></script>
-<script src="js/i18n.js"></script>
-<script src="js/nav.js"></script>
-<script src="js/bottom-bar.js"></script>
-<script src="js/appointment.js"></script>
-<script type="module" src="js/main.js"></script>
-
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/tokens.css">
 </head>
+
 <body>
-<!-- Header -->
-<header class="mc-topbar">
-  <div class="mc-wrap">
-    <button class="hamburger" aria-label="Open menu">≡</button>
-    <a href="index.html" class="brand">MedConnect</a>
-    <div class="lang-switch">
-      <button data-lang="en" aria-pressed="true">EN</button>
-      <button data-lang="fr" aria-pressed="false">FR</button>
+  <!-- Header -->
+  <header class="mc-topbar">
+    <div class="mc-wrap">
+      <button class="hamburger" aria-label="Open menu">≡</button>
+      <a href="index.html" class="brand">MedConnect</a>
+      <div class="lang-switch">
+        <button data-lang="en" aria-pressed="true">EN</button>
+        <button data-lang="fr" aria-pressed="false">FR</button>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<!-- Overlay -->
-<div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
+  <!-- Overlay -->
+  <div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
 
-<!-- Side menu as modal navigation drawer -->
-<nav class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sideMenuTitle">
-  <button class="close-btn" id="closeMenu" aria-label="Close menu">×</button>
-  <h2 id="sideMenuTitle" class="visually-hidden" data-i18n="nav_menu">Main Menu</h2>
-  <ul>
-    <li><a href="index.html" data-i18n="nav_home">Home</a></li>
-    <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
-    <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
-    <li><a href="labs.html" data-i18n="qa_lab">Lab Tests</a></li>
-    <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
-    <li><a href="portal.html" data-i18n="qa_portal">Patient Portal</a></li>
-    <li><a href="about.html" data-i18n="link_about">About</a></li>
-    <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
-    <li><a href="notices.html" data-i18n="nav_notices">Notices</a></li>
-    <li><a href="privacy.html" data-i18n="privacy">Privacy Policy</a></li>
-    <li><a href="terms.html" data-i18n="terms">Terms of Service</a></li>
-  </ul>
-</nav>
+  <!-- Side menu as modal navigation drawer -->
+  <nav class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sideMenuTitle">
+    <button class="close-btn" id="closeMenu" aria-label="Close menu">×</button>
+    <h2 id="sideMenuTitle" class="visually-hidden" data-i18n="nav_menu">Main Menu</h2>
+    <ul>
+      <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+      <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+      <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+      <li><a href="labs.html" data-i18n="qa_lab">Lab Tests</a></li>
+      <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+      <li><a href="portal.html" data-i18n="qa_portal">Patient Portal</a></li>
+      <li><a href="about.html" data-i18n="link_about">About</a></li>
+      <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
+      <li><a href="notices.html" data-i18n="nav_notices">Notices</a></li>
+      <li><a href="privacy.html" data-i18n="privacy">Privacy Policy</a></li>
+      <li><a href="terms.html" data-i18n="terms">Terms of Service</a></li>
+    </ul>
+  </nav>
 
+  <main class="appointment">
+    <div class="container">
+      <h1 data-i18n="appt_title">Book an Appointment</h1>
 
- <main class="appointment">
-  <div class="container">
-    <h1 data-i18n="appt_title">Book an Appointment</h1>
+      <!-- Step indicator -->
+      <div class="appt-steps">
+        <div class="step active" data-step="1" data-i18n="step_doctor">1. Doctor</div>
+        <div class="step" data-step="2" data-i18n="step_date">2. Date</div>
+        <div class="step" data-step="3" data-i18n="step_patient">3. Patient</div>
+        <div class="step" data-step="4" data-i18n="step_confirm">4. Confirm</div>
+      </div>
 
-    <!-- Step indicator -->
-    <div class="appt-steps">
-      <div class="step active" data-step="1" data-i18n="step_doctor">1. Doctor</div>
-      <div class="step" data-step="2" data-i18n="step_date">2. Date</div>
-      <div class="step" data-step="3" data-i18n="step_patient">3. Patient</div>
-      <div class="step" data-step="4" data-i18n="step_confirm">4. Confirm</div>
+      <!-- Multi-step form -->
+      <form id="appointmentForm">
+        <!-- Step 1: Choose doctor -->
+        <div class="form-step active" data-step="1">
+          <label for="specialty" data-i18n="label_specialty">Specialty</label>
+          <select id="specialty" name="specialty" required>
+            <option value="" data-i18n="opt_select_specialty">-- Select Specialty --</option>
+            <option value="cardiology" data-i18n="spec_cardiology">Cardiology</option>
+            <option value="dermatology" data-i18n="spec_dermatology">Dermatology</option>
+            <option value="pediatrics" data-i18n="spec_pediatrics">Pediatrics</option>
+          </select>
+
+          <label for="doctor" data-i18n="label_doctor">Doctor</label>
+          <select id="doctor" name="doctor" required>
+            <option value="" data-i18n="opt_select_doctor">-- Select Doctor --</option>
+            <option value="dr_smith" data-i18n="doc_smith">Dr. Jane Smith</option>
+            <option value="dr_lee" data-i18n="doc_lee">Dr. Michael Lee</option>
+            <option value="dr_patel" data-i18n="doc_patel">Dr. Aisha Patel</option>
+          </select>
+        </div>
+
+        <!-- Step 2: Choose date/time -->
+        <div class="form-step" data-step="2">
+          <label for="date" data-i18n="label_date">Date</label>
+          <input type="date" id="date" name="date" required>
+
+          <label for="time" data-i18n="label_time">Time</label>
+          <input type="time" id="time" name="time" required>
+        </div>
+
+        <!-- Step 3: Patient info -->
+        <div class="form-step" data-step="3">
+          <label for="name" data-i18n="label_name">Full Name</label>
+          <input type="text" id="name" name="name" required placeholder="">
+
+          <label for="phone" data-i18n="label_phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" required placeholder="+230 123 4567">
+
+          <label for="email" data-i18n="label_email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div class="form-step" data-step="4">
+          <p data-i18n="confirm_msg">Please review your details before confirming:</p>
+          <ul id="reviewList"></ul>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="form-nav">
+          <button type="button" id="prevBtn" class="btn ghost" data-i18n="btn_back">Back</button>
+          <button type="button" id="nextBtn" class="btn primary" data-i18n="btn_next">Next</button>
+        </div>
+      </form>
     </div>
+  </main>
 
-    <!-- Multi-step form -->
-    <form id="appointmentForm">
-      <!-- Step 1: Choose doctor -->
-      <div class="form-step active" data-step="1">
-        <label for="specialty" data-i18n="label_specialty">Specialty</label>
-        <select id="specialty" name="specialty" required>
-          <option value="" data-i18n="opt_select_specialty">-- Select Specialty --</option>
-          <option value="cardiology" data-i18n="spec_cardiology">Cardiology</option>
-          <option value="dermatology" data-i18n="spec_dermatology">Dermatology</option>
-          <option value="pediatrics" data-i18n="spec_pediatrics">Pediatrics</option>
-        </select>
-
-        <label for="doctor" data-i18n="label_doctor">Doctor</label>
-        <select id="doctor" name="doctor" required>
-          <option value="" data-i18n="opt_select_doctor">-- Select Doctor --</option>
-          <option value="dr_smith" data-i18n="doc_smith">Dr. Jane Smith</option>
-          <option value="dr_lee" data-i18n="doc_lee">Dr. Michael Lee</option>
-          <option value="dr_patel" data-i18n="doc_patel">Dr. Aisha Patel</option>
-        </select>
-      </div>
-
-      <!-- Step 2: Choose date/time -->
-      <div class="form-step" data-step="2">
-        <label for="date" data-i18n="label_date">Date</label>
-        <input type="date" id="date" name="date" required>
-
-        <label for="time" data-i18n="label_time">Time</label>
-        <input type="time" id="time" name="time" required>
-      </div>
-
-      <!-- Step 3: Patient info -->
-      <div class="form-step" data-step="3">
-        <label for="name" data-i18n="label_name">Full Name</label>
-        <input type="text" id="name" name="name" required placeholder="">
-
-        <label for="phone" data-i18n="label_phone">Phone Number</label>
-        <input type="tel" id="phone" name="phone" required placeholder="+230 123 4567">
-
-        <label for="email" data-i18n="label_email">Email</label>
-        <input type="email" id="email" name="email">
-      </div>
-
-      <!-- Step 4: Confirmation -->
-      <div class="form-step" data-step="4">
-        <p data-i18n="confirm_msg">Please review your details before confirming:</p>
-        <ul id="reviewList"></ul>
-      </div>
-
-      <!-- Navigation buttons -->
-      <div class="form-nav">
-        <button type="button" id="prevBtn" class="btn ghost" data-i18n="btn_back">Back</button>
-        <button type="button" id="nextBtn" class="btn primary" data-i18n="btn_next">Next</button>
-      </div>
-    </form>
-  </div>
-  
-</main>
-
-
-<!-- Bottom Nav -->
-<nav class="mc-bottom-bar" role="navigation" aria-label="Quick actions">
-  <a href="appointment.html" class="mc-tab" aria-label="Book an appointment">
-    <i class="fi fi-rr-calendar mc-ico"></i>
-    <span class="mc-lbl" data-i18n="cta_book">Book</span>
-  </a>
-  <a href="doctors.html" class="mc-tab" aria-label="Find a doctor">
-    <i class="fi fi-rr-stethoscope mc-ico"></i>
-    <span class="mc-lbl" data-i18n="link_find_doctor">Doctors</span>
-  </a>
-  <a href="labs.html" class="mc-tab" aria-label="Lab services">
-    <i class="fi fi-rr-test-tube mc-ico"></i>
-    <span class="mc-lbl" data-i18n="qa_lab">Labs</span>
-  </a>
-</nav>
+  <!-- Bottom Nav -->
+  <nav class="mc-bottom-bar" role="navigation" aria-label="Quick actions">
+    <a href="appointment.html" class="mc-tab" aria-label="Book an appointment">
+      <i class="fi fi-rr-calendar mc-ico"></i>
+      <span class="mc-lbl" data-i18n="cta_book">Book</span>
+    </a>
+    <a href="doctors.html" class="mc-tab" aria-label="Find a doctor">
+      <i class="fi fi-rr-stethoscope mc-ico"></i>
+      <span class="mc-lbl" data-i18n="link_find_doctor">Doctors</span>
+    </a>
+    <a href="labs.html" class="mc-tab" aria-label="Lab services">
+      <i class="fi fi-rr-test-tube mc-ico"></i>
+      <span class="mc-lbl" data-i18n="qa_lab">Labs</span>
+    </a>
+  </nav>
 
   <!-- Footer -->
- <footer class="footer">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <h3 data-i18n="footer_contact">Contact</h3>
-      <p><i class="fi fi-rr-phone-call"></i> +230 123 4567</p>
-      <p><i class="fi fi-rr-envelope"></i> info@medconnect.mu</p>
-      <p><i class="fi fi-rr-marker"></i> 123 Health St, Quatre Bornes</p>
-    </div>
-    <div class="footer-col">
-      <h3 data-i18n="footer_links">Quick Links</h3>
-      <ul>
-        <li><a href="#about" data-i18n="link_about">About</a></li>
-        <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
-        <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
-        <li><a href="labs.html" data-i18n="qa_lab">Labs</a></li>
-        <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h3 data-i18n="footer_follow">Follow Us</h3>
-      <div class="footer-socials">
-        <a href="#"><i class="fi fi-rr-facebook"></i></a>
-        <a href="#"><i class="fi fi-rr-linkedin"></i></a>
-        <a href="#"><i class="fi fi-rr-instagram"></i></a>
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h3 data-i18n="footer_contact">Contact</h3>
+        <p><i class="fi fi-rr-phone-call"></i> +230 123 4567</p>
+        <p><i class="fi fi-rr-envelope"></i> info@medconnect.mu</p>
+        <p><i class="fi fi-rr-marker"></i> 123 Health St, Quatre Bornes</p>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_links">Quick Links</h3>
+        <ul>
+          <li><a href="#about" data-i18n="link_about">About</a></li>
+          <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+          <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+          <li><a href="labs.html" data-i18n="qa_lab">Labs</a></li>
+          <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_follow">Follow Us</h3>
+        <div class="footer-socials">
+          <a href="#"><i class="fi fi-rr-facebook"></i></a>
+          <a href="#"><i class="fi fi-rr-linkedin"></i></a>
+          <a href="#"><i class="fi fi-rr-instagram"></i></a>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="footer-bottom">
-    <p>&copy; 2025 MedConnect. <span data-i18n="rights_reserved">All rights reserved.</span></p>
-    <a href="#privacy" data-i18n="privacy">Privacy Policy</a> | 
-    <a href="#terms" data-i18n="terms">Terms of Service</a>
-  </div>
-</footer>
+    <div class="footer-bottom">
+      <p>&copy; 2025 MedConnect. <span data-i18n="rights_reserved">All rights reserved.</span></p>
+      <a href="#privacy" data-i18n="privacy">Privacy Policy</a> |
+      <a href="#terms" data-i18n="terms">Terms of Service</a>
+    </div>
+  </footer>
 
-  <!-- JS -->
+  <!-- JS (loaded once, at the bottom) -->
+  <script src="js/config.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/nav.js"></script>
   <script src="js/bottom-bar.js"></script>
   <script src="js/appointment.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -9,9 +9,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Only run on the appointment page
   if (!steps.length || !nextBtn || !prevBtn || !form || !reviewList || !stepIndicators.length) return;
 
-  // Prevent double binding if the script is evaluated again
+  // Prevent double binding if script is evaluated again
   if (form.dataset.bound === "1") return;
   form.dataset.bound = "1";
+
+  // Disable past dates (min = today)
+  const dateInput = document.getElementById("date");
+  if (dateInput) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    dateInput.min = `${yyyy}-${mm}-${dd}`;
+  }
 
   let currentStep = 0;
 
@@ -27,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("doctor").value = doctorParam;
   }
 
+  // If doctor + specialty are preselected → skip step 1
   if (doctorParam && specialtyParam) currentStep = 1;
 
   function buildPayload() {
@@ -55,9 +66,11 @@ document.addEventListener("DOMContentLoaded", () => {
         : "Booking failed";
       throw new Error(msg);
     }
+
     return data;
   }
 
+  // --- Step logic ---
   function showStep(index) {
     steps.forEach((s, i) => {
       s.classList.toggle("active", i === index);
@@ -77,6 +90,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     inputs.forEach((input) => {
       if (!input.value) valid = false;
+
+      // Extra guard: prevent past date even if typed manually
+      if (input === dateInput && input.value && dateInput.min && input.value < dateInput.min) {
+        valid = false;
+      }
     });
 
     nextBtn.disabled = !valid;
@@ -87,6 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentStep++;
 
       if (currentStep === steps.length - 1) {
+        // Build review summary
         reviewList.innerHTML = `
           <li><strong>Specialty:</strong> ${form.specialty.value}</li>
           <li><strong>Doctor:</strong> ${form.doctor.value}</li>
@@ -102,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Confirm step: send to backend
     const payload = buildPayload();
 
     nextBtn.disabled = true;
