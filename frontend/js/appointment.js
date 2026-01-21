@@ -1,171 +1,138 @@
-// Prevent double execution if the script is accidentally loaded twice
-if (window.__appointment_js_loaded__) {
-  console.warn("appointment.js already loaded, skipping re-execution");
-} else {
-  window.__appointment_js_loaded__ = true;
+document.addEventListener("DOMContentLoaded", () => {
+  const steps = document.querySelectorAll(".form-step");
+  const stepIndicators = document.querySelectorAll(".appt-steps .step");
+  const nextBtn = document.getElementById("nextBtn");
+  const prevBtn = document.getElementById("prevBtn");
+  const form = document.getElementById("appointmentForm");
+  const reviewList = document.getElementById("reviewList");
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const steps = document.querySelectorAll(".form-step");
-    const stepIndicators = document.querySelectorAll(".appt-steps .step");
-    const nextBtn = document.getElementById("nextBtn");
-    const prevBtn = document.getElementById("prevBtn");
-    const form = document.getElementById("appointmentForm");
-    const reviewList = document.getElementById("reviewList");
+  // Only run on the appointment page
+  if (!steps.length || !nextBtn || !prevBtn || !form || !reviewList || !stepIndicators.length) return;
 
-    // Safety guard (prevents crashes if script is ever loaded on another page)
-    if (
-      !steps.length ||
-      !nextBtn ||
-      !prevBtn ||
-      !form ||
-      !reviewList ||
-      !stepIndicators.length
-    ) {
+  // Prevent double binding if the script is evaluated again
+  if (form.dataset.bound === "1") return;
+  form.dataset.bound = "1";
+
+  let currentStep = 0;
+
+  // --- Read doctor & specialty from URL ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const doctorParam = urlParams.get("doctor");
+  const specialtyParam = urlParams.get("specialty");
+
+  if (specialtyParam && document.getElementById("specialty")) {
+    document.getElementById("specialty").value = specialtyParam;
+  }
+  if (doctorParam && document.getElementById("doctor")) {
+    document.getElementById("doctor").value = doctorParam;
+  }
+
+  if (doctorParam && specialtyParam) currentStep = 1;
+
+  function buildPayload() {
+    return {
+      specialty: form.specialty?.value || "",
+      doctor: form.doctor?.value || "",
+      date: form.date?.value || "",
+      time: form.time?.value || "",
+      name: form.name?.value || "",
+      phone: form.phone?.value || "",
+      email: form.email?.value || "",
+    };
+  }
+
+  async function submitAppointment(payload) {
+    const res = await fetch(`${window.API_BASE_URL}/api/appointments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error
+        ? `${data.error}${data.missing ? `: ${data.missing.join(", ")}` : ""}`
+        : "Booking failed";
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  function showStep(index) {
+    steps.forEach((s, i) => {
+      s.classList.toggle("active", i === index);
+      stepIndicators[i]?.classList.toggle("active", i === index);
+    });
+
+    prevBtn.style.display = index === 0 ? "none" : "inline-block";
+    nextBtn.textContent = index === steps.length - 1 ? "Confirm" : "Next";
+
+    validateStep();
+  }
+
+  function validateStep() {
+    const activeStep = steps[currentStep];
+    const inputs = activeStep.querySelectorAll("input[required], select[required]");
+    let valid = true;
+
+    inputs.forEach((input) => {
+      if (!input.value) valid = false;
+    });
+
+    nextBtn.disabled = !valid;
+  }
+
+  nextBtn.addEventListener("click", async () => {
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+
+      if (currentStep === steps.length - 1) {
+        reviewList.innerHTML = `
+          <li><strong>Specialty:</strong> ${form.specialty.value}</li>
+          <li><strong>Doctor:</strong> ${form.doctor.value}</li>
+          <li><strong>Date:</strong> ${form.date.value}</li>
+          <li><strong>Time:</strong> ${form.time.value}</li>
+          <li><strong>Name:</strong> ${form.name.value}</li>
+          <li><strong>Phone:</strong> ${form.phone.value}</li>
+          <li><strong>Email:</strong> ${form.email.value}</li>
+        `;
+      }
+
+      showStep(currentStep);
       return;
     }
 
-    let currentStep = 0;
+    const payload = buildPayload();
 
-    // --- Read doctor & specialty from URL ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const doctorParam = urlParams.get("doctor");
-    const specialtyParam = urlParams.get("specialty");
+    nextBtn.disabled = true;
+    const originalLabel = nextBtn.textContent;
+    nextBtn.textContent = "Submitting...";
 
-    if (specialtyParam && document.getElementById("specialty")) {
-      document.getElementById("specialty").value = specialtyParam;
-    }
-    if (doctorParam && document.getElementById("doctor")) {
-      document.getElementById("doctor").value = doctorParam;
-    }
+    try {
+      await submitAppointment(payload);
+      alert("Appointment booked successfully");
 
-    // If doctor + specialty are preselected → skip step 1
-    if (doctorParam && specialtyParam) {
-      currentStep = 1;
-    }
-
-    function buildPayload() {
-      return {
-        specialty: form.specialty?.value || "",
-        doctor: form.doctor?.value || "",
-        date: form.date?.value || "",
-        time: form.time?.value || "",
-        name: form.name?.value || "",
-        phone: form.phone?.value || "",
-        email: form.email?.value || "",
-      };
-    }
-
-    async function submitAppointment(payload) {
-      const res = await fetch(
-        `${window.API_BASE_URL}/api/appointments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        const msg = data?.error
-          ? `${data.error}${
-              data.missing ? `: ${data.missing.join(", ")}` : ""
-            }`
-          : "Booking failed";
-        throw new Error(msg);
-      }
-
-      return data;
-    }
-
-    // --- Step logic ---
-    function showStep(index) {
-      steps.forEach((s, i) => {
-        s.classList.toggle("active", i === index);
-        if (stepIndicators[i]) {
-          stepIndicators[i].classList.toggle("active", i === index);
-        }
-      });
-
-      prevBtn.style.display = index === 0 ? "none" : "inline-block";
-      nextBtn.textContent =
-        index === steps.length - 1 ? "Confirm" : "Next";
-
+      form.reset();
+      currentStep = doctorParam && specialtyParam ? 1 : 0;
+      showStep(currentStep);
+    } catch (err) {
+      console.error(err);
+      alert(`Error booking appointment${err?.message ? `: ${err.message}` : ""}`);
+      showStep(currentStep);
+    } finally {
+      nextBtn.textContent = originalLabel;
       validateStep();
     }
-
-    function validateStep() {
-      const activeStep = steps[currentStep];
-      const inputs = activeStep.querySelectorAll(
-        "input[required], select[required]"
-      );
-
-      let valid = true;
-      inputs.forEach((input) => {
-        if (!input.value) valid = false;
-      });
-
-      nextBtn.disabled = !valid;
-    }
-
-    nextBtn.addEventListener("click", async () => {
-      if (currentStep < steps.length - 1) {
-        currentStep++;
-
-        if (currentStep === steps.length - 1) {
-          reviewList.innerHTML = `
-            <li><strong>Specialty:</strong> ${form.specialty.value}</li>
-            <li><strong>Doctor:</strong> ${form.doctor.value}</li>
-            <li><strong>Date:</strong> ${form.date.value}</li>
-            <li><strong>Time:</strong> ${form.time.value}</li>
-            <li><strong>Name:</strong> ${form.name.value}</li>
-            <li><strong>Phone:</strong> ${form.phone.value}</li>
-            <li><strong>Email:</strong> ${form.email.value}</li>
-          `;
-        }
-
-        showStep(currentStep);
-        return;
-      }
-
-      // --- Confirm step: send to backend ---
-      const payload = buildPayload();
-
-      nextBtn.disabled = true;
-      const originalLabel = nextBtn.textContent;
-      nextBtn.textContent = "Submitting...";
-
-      try {
-        await submitAppointment(payload);
-        alert("Appointment booked successfully");
-
-        form.reset();
-        currentStep = doctorParam && specialtyParam ? 1 : 0;
-        showStep(currentStep);
-      } catch (err) {
-        console.error(err);
-        alert(
-          `Error booking appointment${
-            err?.message ? `: ${err.message}` : ""
-          }`
-        );
-        showStep(currentStep);
-      } finally {
-        nextBtn.textContent = originalLabel;
-        validateStep();
-      }
-    });
-
-    prevBtn.addEventListener("click", () => {
-      if (currentStep > 0) {
-        currentStep--;
-        showStep(currentStep);
-      }
-    });
-
-    form.addEventListener("input", validateStep);
-
-    showStep(currentStep);
   });
-}
+
+  prevBtn.addEventListener("click", () => {
+    if (currentStep > 0) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  });
+
+  form.addEventListener("input", validateStep);
+
+  showStep(currentStep);
+});
