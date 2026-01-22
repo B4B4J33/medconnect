@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="dashboard_title">Dashboard – MedConnect</title>
+
+  <!-- UIcons -->
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+
+  <!-- CSS (keep same order you use across pages) -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/tokens.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="mc-topbar">
+    <div class="mc-wrap">
+      <button class="hamburger" aria-label="Open menu">≡</button>
+      <a class="brand" href="index.html">MedConnect</a>
+      <div class="lang-switch">
+        <button data-lang="en" aria-pressed="true">EN</button>
+        <button data-lang="fr" aria-pressed="false">FR</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Overlay + Side Menu -->
+  <div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
+  <nav class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sideMenuTitle">
+    <button class="close-btn" id="closeMenu" aria-label="Close menu">×</button>
+    <h2 id="sideMenuTitle" class="visually-hidden" data-i18n="nav_menu">Main Menu</h2>
+    <ul>
+      <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+      <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+      <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+      <li><a href="labs.html" data-i18n="qa_lab">Lab Tests</a></li>
+      <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+
+      <!-- Dashboard entry (replaces portal link in nav later; auth gate will protect) -->
+      <li><a href="dashboard.html" data-i18n="qa_dashboard">Dashboard</a></li>
+
+      <li><a href="about.html" data-i18n="link_about">About</a></li>
+      <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
+      <li><a href="notices.html" data-i18n="nav_notices">Notices</a></li>
+      <li><a href="privacy.html" data-i18n="privacy">Privacy Policy</a></li>
+      <li><a href="terms.html" data-i18n="terms">Terms of Service</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="dashboard">
+    <h1 data-i18n="dashboard_title">Dashboard</h1>
+    <p class="intro" id="dashIntro" data-i18n="dashboard_intro">
+      Loading your dashboard…
+    </p>
+
+    <!-- Status line (user + role) -->
+    <div class="dash-meta" id="dashMeta" hidden>
+      <p class="dash-user" id="dashUser"></p>
+      <span class="dash-role" id="dashRole"></span>
+    </div>
+
+    <!-- Appointments -->
+    <section class="dash-section" aria-labelledby="dashApptTitle">
+      <h2 id="dashApptTitle" data-i18n="dashboard_appointments">Appointments</h2>
+
+      <div id="dashApptLoading" class="dash-loading" data-i18n="loading">
+        Loading...
+      </div>
+
+      <div id="dashApptEmpty" class="dash-empty" hidden data-i18n="dashboard_no_appointments">
+        No appointments to display.
+      </div>
+
+      <div class="table-wrap" id="dashApptTableWrap" hidden>
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th data-i18n="th_date">Date</th>
+              <th data-i18n="th_time">Time</th>
+              <th data-i18n="th_name">Name</th>
+              <th data-i18n="th_phone">Phone</th>
+              <th data-i18n="th_status">Status</th>
+              <th data-i18n="th_action">Action</th>
+            </tr>
+          </thead>
+          <tbody id="dashApptTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Lab Reports -->
+    <section class="dash-section" aria-labelledby="dashReportsTitle">
+      <h2 id="dashReportsTitle" data-i18n="dashboard_reports">Lab Reports</h2>
+
+      <div id="dashRepLoading" class="dash-loading" data-i18n="loading">
+        Loading...
+      </div>
+
+      <div id="dashRepEmpty" class="dash-empty" hidden data-i18n="dashboard_no_reports">
+        No lab reports to display.
+      </div>
+
+      <div class="table-wrap" id="dashRepTableWrap" hidden>
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th data-i18n="th_uploaded">Uploaded</th>
+              <th data-i18n="th_type">Type</th>
+              <th data-i18n="th_patient">Patient</th>
+              <th data-i18n="th_file">File</th>
+            </tr>
+          </thead>
+          <tbody id="dashRepTbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer (same as your portal for consistency) -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h3 data-i18n="footer_contact">Contact</h3>
+        <p><i class="fi fi-rr-phone-call"></i> +230 123 4567</p>
+        <p><i class="fi fi-rr-envelope"></i> info@medconnect.mu</p>
+        <p><i class="fi fi-rr-marker"></i> 123 Health St, Quatre Bornes</p>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_links">Quick Links</h3>
+        <ul>
+          <li><a href="index.html#about" data-i18n="link_about">About</a></li>
+          <li><a href="specialties.html" data-i18n="qa_specialties">Specialties</a></li>
+          <li><a href="doctors.html" data-i18n="qa_doctors">Doctors</a></li>
+          <li><a href="labs.html" data-i18n="qa_lab">Labs</a></li>
+          <li><a href="pharmacy.html" data-i18n="qa_pharmacy">Pharmacy</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 data-i18n="footer_follow">Follow Us</h3>
+        <div class="footer-socials">
+          <a href="#"><i class="fi fi-rr-facebook"></i></a>
+          <a href="#"><i class="fi fi-rr-linkedin"></i></a>
+          <a href="#"><i class="fi fi-rr-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 MedConnect. <span data-i18n="rights_reserved">All rights reserved.</span></p>
+      <a href="privacy.html" data-i18n="privacy">Privacy Policy</a> |
+      <a href="terms.html" data-i18n="terms">Terms of Service</a>
+    </div>
+  </footer>
+
+  <!-- JS (ONLY once, at bottom, same for all pages) -->
+  <script src="js/config.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/bottom-bar.js"></script>
+
+  <!-- Dashboard logic (next step) -->
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

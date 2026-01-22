@@ -1,19 +1,34 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app)
 
+# Required for session-based auth
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+# Allow cookies / sessions from frontend
+CORS(app, supports_credentials=True)
+
+# --------------------
+# Register blueprints
+# --------------------
 from app.routes.appointments import appointments_bp
 app.register_blueprint(appointments_bp)
-
 
 from app.routes.doctors import doctors_bp
 app.register_blueprint(doctors_bp)
 
+from app.routes.auth import auth_bp
+app.register_blueprint(auth_bp)
+
+# --------------------
+# Health check
+# --------------------
 @app.route("/api/health", methods=["GET"])
 def health():
     return {"status": "ok"}, 200
+
 
 # --------------------
 # In-memory storage (demo only)
@@ -23,6 +38,7 @@ APPOINTMENTS = []
 
 # --------------------
 # Create appointment (POST)
+# Demo/testing only – keep for now
 # --------------------
 @app.route("/api/appointments", methods=["POST"])
 def create_appointment():
@@ -59,7 +75,8 @@ def create_appointment():
 
 
 # --------------------
-# List appointments (GET) — demo/testing only
+# List appointments (GET)
+# Demo/testing only – keep for now
 # --------------------
 @app.route("/api/appointments", methods=["GET"])
 def list_appointments():

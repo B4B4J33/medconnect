@@ -1165,3 +1165,135 @@ input, select {
   color: var(--color-accent);
   margin-bottom: var(--spacing-1);
 }
+
+
+/* =========================
+   Page: Dashboard
+   ========================= */
+
+.page-dashboard .intro,
+.dashboard .intro {
+  margin-top: 6px;
+  margin-bottom: 18px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.page-dashboard .dash-meta,
+.dashboard .dash-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  background: #fff;
+  margin: 14px 0 18px;
+}
+
+.page-dashboard .dash-user,
+.dashboard .dash-user {
+  margin: 0;
+  font-weight: 700;
+}
+
+.page-dashboard .dash-role,
+.dashboard .dash-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.03);
+  font-size: 12px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.page-dashboard .dash-section,
+.dashboard .dash-section {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.page-dashboard .dash-section h2,
+.dashboard .dash-section h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.page-dashboard .dash-loading,
+.dashboard .dash-loading {
+  padding: 12px;
+  color: #666;
+  font-size: 14px;
+}
+
+.page-dashboard .dash-empty,
+.dashboard .dash-empty {
+  padding: 12px;
+  border: 1px dashed rgba(0,0,0,0.14);
+  border-radius: 12px;
+  color: #666;
+  background: rgba(0,0,0,0.02);
+}
+
+.page-dashboard .table-wrap,
+.dashboard .table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+/* Table tuning (scoped) */
+.page-dashboard .mc-table,
+.dashboard .mc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.page-dashboard .mc-table th,
+.page-dashboard .mc-table td,
+.dashboard .mc-table th,
+.dashboard .mc-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.page-dashboard .mc-table th,
+.dashboard .mc-table th {
+  font-weight: 700;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(0,0,0,0.02);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .page-dashboard .dash-section,
+  .dashboard .dash-section {
+    padding: 12px;
+  }
+
+  .page-dashboard .dash-section h2,
+  .dashboard .dash-section h2 {
+    font-size: 16px;
+  }
+
+  .page-dashboard .mc-table,
+  .dashboard .mc-table {
+    font-size: 13px;
+  }
+}
