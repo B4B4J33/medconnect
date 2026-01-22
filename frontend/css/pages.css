@@ -1170,7 +1170,23 @@ input, select {
 /* =========================
    Page: Dashboard
    ========================= */
+.page-dashboard,
+.dashboard {
+  padding: var(--spacing-4) var(--spacing-3);
+  max-width: 1000px;
+  margin: 0 auto;
+}
 
+.page-dashboard h1,
+.dashboard h1 {
+  font-size: 1.8rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-2);
+  text-align: center;
+}
+
+/* Intro text */
 .page-dashboard .intro,
 .dashboard .intro {
   margin-top: 6px;
@@ -1179,6 +1195,7 @@ input, select {
   line-height: 1.5;
 }
 
+/* User meta bar */
 .page-dashboard .dash-meta,
 .dashboard .dash-meta {
   display: flex;
@@ -1186,7 +1203,7 @@ input, select {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   background: #fff;
   margin: 14px 0 18px;
@@ -1204,18 +1221,19 @@ input, select {
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.12);
-  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
   font-size: 12px;
   text-transform: capitalize;
   white-space: nowrap;
 }
 
+/* Sections */
 .page-dashboard .dash-section,
 .dashboard .dash-section {
   margin: 18px 0;
   padding: 14px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
   background: #fff;
 }
@@ -1227,6 +1245,7 @@ input, select {
   line-height: 1.2;
 }
 
+/* Loading / empty states */
 .page-dashboard .dash-loading,
 .dashboard .dash-loading {
   padding: 12px;
@@ -1237,12 +1256,13 @@ input, select {
 .page-dashboard .dash-empty,
 .dashboard .dash-empty {
   padding: 12px;
-  border: 1px dashed rgba(0,0,0,0.14);
+  border: 1px dashed rgba(0, 0, 0, 0.14);
   border-radius: 12px;
   color: #666;
-  background: rgba(0,0,0,0.02);
+  background: rgba(0, 0, 0, 0.02);
 }
 
+/* Table wrapper */
 .page-dashboard .table-wrap,
 .dashboard .table-wrap {
   width: 100%;
@@ -1251,7 +1271,7 @@ input, select {
   border-radius: 12px;
 }
 
-/* Table tuning (scoped) */
+/* Table (scoped) */
 .page-dashboard .mc-table,
 .dashboard .mc-table {
   width: 100%;
@@ -1263,8 +1283,8 @@ input, select {
 .page-dashboard .mc-table td,
 .dashboard .mc-table th,
 .dashboard .mc-table td {
-  padding: 10px 10px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   text-align: left;
   vertical-align: top;
   white-space: nowrap;
@@ -1277,11 +1297,17 @@ input, select {
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: rgba(0,0,0,0.02);
+  background: rgba(0, 0, 0, 0.02);
 }
 
-/* Mobile adjustments */
+/* Mobile */
 @media (max-width: 480px) {
+  .page-dashboard .dash-meta,
+  .dashboard .dash-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .page-dashboard .dash-section,
   .dashboard .dash-section {
     padding: 12px;
