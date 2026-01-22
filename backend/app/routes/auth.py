@@ -7,9 +7,9 @@ auth_bp = Blueprint("auth", __name__)
 # -----------------------------------------
 USERS = [
     # Ready-to-use test accounts (optional):
-    # {"id": 1, "email": "patient@test.com", "password": "1234", "name": "Test Patient", "role": "patient", "patient_id": 101},
-    # {"id": 2, "email": "doctor@test.com",  "password": "1234", "name": "Dr Test",      "role": "doctor",  "doctor_id": 201},
-    # {"id": 3, "email": "admin@test.com",   "password": "1234", "name": "Admin",        "role": "admin"},
+    {"id": 1, "email": "patient@test.com", "password": "1234", "name": "Test Patient", "role": "patient", "patient_id": 101},
+    {"id": 2, "email": "doctor@test.com",  "password": "1234", "name": "Dr Test",      "role": "doctor",  "doctor_id": 201},
+    {"id": 3, "email": "admin@test.com",   "password": "1234", "name": "Admin",        "role": "admin"},
 ]
 
 def _find_user_by_email(email: str):
