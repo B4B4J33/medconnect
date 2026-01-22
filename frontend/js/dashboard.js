@@ -1,30 +1,33 @@
-// js/dashboard.js
+// js/dashboard.js (final)
+// - Auth gate via /api/me
+// - Welcome + role
+// - Logout
+// - Nav role rules on dashboard page
+// - Appointments load (with filter fallbacks)
+// - Reports load (graceful if endpoint not ready)
+
 (() => {
   const API_BASE =
     (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
 
-  // ====== DOM ======
   const el = {
     dashName: document.getElementById("dashName"),
     dashRole: document.getElementById("dashRole"),
     logoutBtn: document.getElementById("logoutBtn"),
     dashIntro: document.getElementById("dashIntro"),
 
-    // Appointments
     apptTitle: document.getElementById("dashApptTitle"),
     apptLoading: document.getElementById("dashApptLoading"),
     apptEmpty: document.getElementById("dashApptEmpty"),
     apptTableWrap: document.getElementById("dashApptTableWrap"),
     apptTbody: document.getElementById("dashApptTbody"),
 
-    // Reports
     repLoading: document.getElementById("dashRepLoading"),
     repEmpty: document.getElementById("dashRepEmpty"),
     repTableWrap: document.getElementById("dashRepTableWrap"),
     repTbody: document.getElementById("dashRepTbody"),
   };
 
-  // ====== Helpers ======
   function setText(node, value) {
     if (!node) return;
     node.textContent = value == null ? "" : String(value);
@@ -46,6 +49,15 @@
 
   function portalUrl() {
     return "portal.html";
+  }
+
+  function escapeHtml(v) {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   async function apiFetch(path, opts = {}) {
@@ -92,13 +104,49 @@
     });
   }
 
+  // ===== Nav rules (on dashboard page) =====
+  function applyDashboardNavRules(user) {
+    const isAuth = !!user;
+    const role = normRole(user?.role);
+
+    function setLiVisibleByHref(href, visible) {
+      const a = document.querySelector(`.side-menu a[href="${href}"]`);
+      const li = a ? a.closest("li") : null;
+      if (li) li.hidden = !visible;
+    }
+
+    // Logged in: show dashboard, hide portal/login. Logged out: opposite (but dashboard will redirect anyway).
+    setLiVisibleByHref("dashboard.html", isAuth);
+    setLiVisibleByHref("portal.html", !isAuth);
+    setLiVisibleByHref("login.html", !isAuth); // optional if ever used
+
+    // Role-only support (future-proof):
+    // <li data-roles="doctor,admin"><a href="...">...</a></li>
+    document.querySelectorAll(".side-menu li[data-roles]").forEach((li) => {
+      if (!isAuth) {
+        li.hidden = true;
+        return;
+      }
+      const roles = (li.getAttribute("data-roles") || "")
+        .split(",")
+        .map((r) => r.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (!roles.length) {
+        li.hidden = false;
+        return;
+      }
+      li.hidden = !roles.includes(role);
+    });
+  }
+
   function introForRole(role) {
     if (role === "doctor") return "Your upcoming appointments and quick actions will appear here.";
     if (role === "admin") return "System overview and recent activity will appear here.";
     return "Your upcoming appointments and quick actions will appear here.";
   }
 
-  // ====== Appointments ======
+  // ===== Appointments =====
   function resetAppointmentsUI() {
     show(el.apptLoading);
     hide(el.apptEmpty);
@@ -125,7 +173,7 @@
       const phone = a.phone || "";
       const status = a.status || a.state || "scheduled";
 
-      // Optional action (placeholder for next phase: cancel/reschedule/view)
+      // Placeholder action for next phase (view/cancel/reschedule)
       const action = `<a href="appointment.html" class="btn ghost" style="padding:8px 12px; border-width:1px;">View</a>`;
 
       return `
@@ -143,33 +191,20 @@
     el.apptTbody.innerHTML = rows.join("");
   }
 
-  function escapeHtml(v) {
-    return String(v ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
   async function tryFetchAppointments(url) {
     const res = await apiFetch(url, { method: "GET" });
     if (!res.ok) return null;
-    const data = await res.json().catch(() => null);
-    return data;
+    return res.json().catch(() => null);
   }
 
   async function loadAppointments(user) {
     resetAppointmentsUI();
 
-    // We’ll try multiple query patterns so it works with your API whichever filter it supports.
-    // Known from your /api/me: patient_id, doctor_id, email, role.
     const role = normRole(user.role);
     const doctorId = user.doctor_id;
     const patientId = user.patient_id;
     const email = user.email;
 
-    // Title tweak by role
     if (el.apptTitle) {
       el.apptTitle.textContent =
         role === "doctor" ? "Appointments (Doctor)" :
@@ -177,23 +212,17 @@
                             "My Appointments";
     }
 
-    // Candidates (first successful wins)
     const candidates = [];
 
-    // Doctor view: prefer doctor_id filter
     if (role === "doctor" && doctorId != null) {
       candidates.push(`/api/appointments?doctor_id=${encodeURIComponent(doctorId)}`);
     }
-
-    // Patient view: try patient_id, then email
     if (role === "patient" && patientId != null) {
       candidates.push(`/api/appointments?patient_id=${encodeURIComponent(patientId)}`);
     }
     if (email) {
       candidates.push(`/api/appointments?email=${encodeURIComponent(email)}`);
     }
-
-    // Fallback: unfiltered list (if allowed)
     candidates.push(`/api/appointments`);
 
     let payload = null;
@@ -202,12 +231,11 @@
       if (payload) break;
     }
 
-    // Your appointments endpoint previously returned {count, items:[...]}.
     const items = payload?.items || payload?.data || payload || [];
     renderAppointments(items);
   }
 
-  // ====== Reports ======
+  // ===== Reports =====
   function resetReportsUI() {
     show(el.repLoading);
     hide(el.repEmpty);
@@ -231,13 +259,12 @@
       const uploaded = r.uploaded || r.created_at || "";
       const type = r.type || r.category || "";
       const patient = r.patient || r.patient_name || "";
-      const fileLabel = r.file_name || r.file || "Download";
-      const fileUrl = r.url || r.file_url || "#";
+      const fileUrl = r.url || r.file_url || "";
 
       const link =
-        fileUrl && fileUrl !== "#"
+        fileUrl
           ? `<a href="${escapeHtml(fileUrl)}" class="btn ghost" style="padding:8px 12px; border-width:1px;" target="_blank" rel="noopener">Open</a>`
-          : escapeHtml(fileLabel);
+          : `<span>—</span>`;
 
       return `
         <tr>
@@ -255,52 +282,40 @@
   async function loadReports(user) {
     resetReportsUI();
 
-    // Try a likely endpoint. If it doesn’t exist yet, we’ll fail gracefully.
-    // You can later implement it in Flask and this will start working without changing front-end.
-    try {
-      const role = normRole(user.role);
-      const patientId = user.patient_id;
-      const doctorId = user.doctor_id;
+    // Graceful: if /api/reports doesn't exist yet, show empty state without crashing.
+    const role = normRole(user.role);
+    const patientId = user.patient_id;
+    const doctorId = user.doctor_id;
 
-      // Candidate URLs (first that returns 200 wins)
-      const candidates = [];
+    const candidates = [];
 
-      if (role === "patient" && patientId != null) {
-        candidates.push(`/api/reports?patient_id=${encodeURIComponent(patientId)}`);
-      }
-      if (role === "doctor" && doctorId != null) {
-        candidates.push(`/api/reports?doctor_id=${encodeURIComponent(doctorId)}`);
-      }
-      candidates.push(`/api/reports`);
-
-      let payload = null;
-      for (const url of candidates) {
-        const res = await apiFetch(url, { method: "GET" });
-        if (!res.ok) continue;
-        payload = await res.json().catch(() => null);
-        if (payload) break;
-      }
-
-      const items = payload?.items || payload?.data || payload || [];
-      renderReports(items);
-    } catch (e) {
-      // Endpoint likely not implemented yet
-      hide(el.repLoading);
-      show(el.repEmpty);
-      hide(el.repTableWrap);
+    if (role === "patient" && patientId != null) {
+      candidates.push(`/api/reports?patient_id=${encodeURIComponent(patientId)}`);
     }
+    if (role === "doctor" && doctorId != null) {
+      candidates.push(`/api/reports?doctor_id=${encodeURIComponent(doctorId)}`);
+    }
+    candidates.push(`/api/reports`);
+
+    let payload = null;
+
+    for (const url of candidates) {
+      const res = await apiFetch(url, { method: "GET" });
+      if (!res.ok) continue;
+      payload = await res.json().catch(() => null);
+      if (payload) break;
+    }
+
+    // If no endpoint yet (404), payload stays null -> empty state
+    const items = payload?.items || payload?.data || payload || [];
+    renderReports(items);
   }
 
-  // ====== Init ======
+  // ===== Init =====
   async function init() {
     bindLogout();
 
-    // Start with a clear loading message
-    if (el.dashIntro) {
-      el.dashIntro.textContent = "Loading your dashboard…";
-    }
-
-    // Also show section loaders early
+    if (el.dashIntro) el.dashIntro.textContent = "Loading your dashboard…";
     resetAppointmentsUI();
     resetReportsUI();
 
@@ -311,12 +326,11 @@
       return;
     }
 
+    // Expect: { success:true, user:{...} }
     if (!me.ok || !me.data || me.data.success !== true || !me.data.user) {
       if (el.dashIntro) {
-        el.dashIntro.textContent =
-          "We couldn’t load your dashboard. Please log in again.";
+        el.dashIntro.textContent = "We couldn’t load your dashboard. Please log in again.";
       }
-      // Soft redirect
       setTimeout(() => {
         window.location.href = portalUrl();
       }, 1200);
@@ -327,20 +341,14 @@
     const name = user.name || user.email || "User";
     const role = normRole(user.role) || "patient";
 
-    // Top meta bar
     setText(el.dashName, name);
     setText(el.dashRole, role);
 
-    // Intro becomes real content now
-    if (el.dashIntro) {
-      el.dashIntro.textContent = introForRole(role);
-    }
+    applyDashboardNavRules(user);
 
-    // Load data
-    await Promise.all([
-      loadAppointments(user),
-      loadReports(user),
-    ]);
+    if (el.dashIntro) el.dashIntro.textContent = introForRole(role);
+
+    await Promise.all([loadAppointments(user), loadReports(user)]);
   }
 
   document.addEventListener("DOMContentLoaded", init);
