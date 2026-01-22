@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from app.routes.doctors import DOCTORS  # reuse in-memory doctors list
+from sms import send_sms  # NEW
 
 appointments_bp = Blueprint("appointments", __name__)
 
@@ -14,6 +15,7 @@ def find_doctor(doctor_id: int):
 @appointments_bp.route("/api/appointments", methods=["GET"])
 def list_appointments():
     doctor_id = request.args.get("doctor_id")
+    email = request.args.get("email")  # NEW (optional filter)
 
     result = APPOINTMENTS
 
@@ -25,7 +27,12 @@ def list_appointments():
 
         result = [a for a in result if a.get("doctor_id") == did]
 
-    return jsonify(result), 200
+    if email:
+        email_norm = str(email).strip().lower()
+        result = [a for a in result if str(a.get("email", "")).strip().lower() == email_norm]
+
+    # Return consistent shape for dashboard: {count, items}
+    return jsonify({"count": len(result), "items": result}), 200
 
 
 @appointments_bp.route("/api/appointments", methods=["POST"])
@@ -65,4 +72,25 @@ def create_appointment():
     }
 
     APPOINTMENTS.append(new_item)
-    return jsonify(new_item), 201
+
+    # ---- SMS (non-blocking) ----
+    sms_result = {"ok": False, "error": "not_sent"}
+    try:
+        # Keep message short and clear
+        sms_text = (
+            f"MedConnect: Appointment confirmed with {new_item['doctor']} "
+            f"on {new_item['date']} at {new_item['time']}."
+        )
+        sms_result = send_sms(new_item["phone"], sms_text)
+    except Exception as e:
+        sms_result = {"ok": False, "error": str(e)}
+
+    return jsonify({
+        "success": True,
+        "appointment": new_item,
+        "sms": {
+            "sent": bool(sms_result.get("ok")),
+            "sid": sms_result.get("sid"),
+            "error": sms_result.get("error") if not sms_result.get("ok") else None,
+        }
+    }), 201
