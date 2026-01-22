@@ -7,8 +7,21 @@ app = Flask(__name__)
 # Required for session-based auth
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True,
+)
+
+
 # Allow cookies / sessions from frontend
-CORS(app, supports_credentials=True)
+CORS(
+    app,
+    supports_credentials=True,
+    resources={r"/api/*": {"origins": [
+        "https://medconnect-frontend-fy9z.onrender.com"
+    ]}}
+)
+
 
 # --------------------
 # Register blueprints
