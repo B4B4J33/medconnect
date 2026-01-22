@@ -132,6 +132,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Populate doctors based on selected specialty
     populateDoctorsForSpecialty(doctorsIndex, specialtySelect.value);
 
+    // If specialty preselected but doctor not set, auto-select first doctor
+    if (!doctorSelect.value && !doctorSelect.disabled && doctorSelect.options.length > 1) {
+      doctorSelect.selectedIndex = 1;
+    }
+
+
     // If doctorParam is provided:
     // - if it's numeric: treat as doctor_id
     // - else: try match full_name
@@ -221,11 +227,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // When specialty changes, refresh doctor list
-  specialtySelect?.addEventListener("change", () => {
-    populateDoctorsForSpecialty(doctorsIndex, specialtySelect.value);
+specialtySelect?.addEventListener("change", () => {
+  populateDoctorsForSpecialty(doctorsIndex, specialtySelect.value);
+
+  // Auto-select first available doctor (skip placeholder)
+  if (!doctorSelect.disabled && doctorSelect.options.length > 1) {
+    doctorSelect.selectedIndex = 1;
+  } else {
     doctorSelect.value = "";
-    validateStep();
-  });
+  }
+
+  validateStep();
+});
+
 
   doctorSelect?.addEventListener("change", validateStep);
 
