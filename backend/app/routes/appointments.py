@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 
 from app.routes.doctors import DOCTORS  # reuse in-memory doctors list
-from sms import send_sms  # NEW
+from sms import send_sms
+
 
 appointments_bp = Blueprint("appointments", __name__)
 
