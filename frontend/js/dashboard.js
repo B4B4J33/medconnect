@@ -1,10 +1,9 @@
-// js/dashboard.js (final)
 // - Auth gate via /api/me
 // - Welcome + role
 // - Logout
 // - Nav role rules on dashboard page
 // - Appointments load (with filter fallbacks)
-// - Reports load (graceful if endpoint not ready)
+// - Reports load 
 
 (() => {
   const API_BASE =
