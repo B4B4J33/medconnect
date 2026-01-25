@@ -1,7 +1,7 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 
-from app.routes.doctors import DOCTORS  # reuse in-memory doctors list
-from sms import send_sms  # or from app.sms import send_sms (depending on where you placed sms.py)
+from app.routes.doctors import DOCTORS
+from sms import send_sms
 
 appointments_bp = Blueprint("appointments", __name__)
 
@@ -16,33 +16,32 @@ def find_appointment(appt_id: int):
     return next((a for a in APPOINTMENTS if a.get("id") == appt_id), None)
 
 
-def get_me_user():
-    """
-    Minimal auth helper: call your own /api/me endpoint internally via request context.
-    If your /api/me is implemented in another module, this is the simplest:
-    - we read from the same session by calling it as a request to the route is awkward,
-      so instead, we recommend importing the function that returns current user.
-    For MVP: we accept role/email passed in headers as a fallback (optional).
-    """
-    # If you already store user in session, replace this with that session read.
-    # Example (if using Flask session): from flask import session; return session.get("user")
-    # For now, try to use a header fallback to avoid breaking deploy if you haven’t exposed session here.
-    role = (request.headers.get("X-Demo-Role") or "").strip().lower()
-    email = (request.headers.get("X-Demo-Email") or "").strip().lower()
-
-    if role and email:
-        return {"role": role, "email": email}
-
-    # If you have a global auth helper, plug it here.
-    return None
-
-
 @appointments_bp.route("/api/appointments", methods=["GET"])
 def list_appointments():
-    doctor_id = request.args.get("doctor_id")
-    email = request.args.get("email")
+    role = session.get("role")
+    email = session.get("email")
+    doctor_id_session = session.get("doctor_id")
 
-    result = APPOINTMENTS
+    if not role:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if role == "admin":
+        result = APPOINTMENTS
+
+    elif role == "doctor":
+        result = [a for a in APPOINTMENTS if a.get("doctor_id") == doctor_id_session]
+
+    elif role == "patient":
+        result = [
+            a for a in APPOINTMENTS
+            if str(a.get("email", "")).strip().lower() == str(email).lower()
+        ]
+
+    else:
+        return jsonify({"error": "Forbidden"}), 403
+
+    doctor_id = request.args.get("doctor_id")
+    email_param = request.args.get("email")
 
     if doctor_id is not None:
         try:
@@ -51,8 +50,8 @@ def list_appointments():
             return jsonify({"error": "doctor_id must be an integer"}), 400
         result = [a for a in result if a.get("doctor_id") == did]
 
-    if email:
-        email_norm = str(email).strip().lower()
+    if email_param:
+        email_norm = str(email_param).strip().lower()
         result = [a for a in result if str(a.get("email", "")).strip().lower() == email_norm]
 
     return jsonify({"count": len(result), "items": result}), 200
@@ -60,6 +59,9 @@ def list_appointments():
 
 @appointments_bp.route("/api/appointments", methods=["POST"])
 def create_appointment():
+    if session.get("role") != "patient":
+        return jsonify({"error": "Forbidden"}), 403
+
     payload = request.get_json(silent=True) or {}
 
     required = ["specialty", "doctor", "date", "time", "name", "phone", "email", "doctor_id"]
@@ -118,10 +120,6 @@ def create_appointment():
 
 @appointments_bp.route("/api/appointments/<int:appt_id>", methods=["PATCH"])
 def update_appointment(appt_id: int):
-    """
-    PATCH body example:
-    { "status": "confirmed" }  # or cancelled / completed
-    """
     payload = request.get_json(silent=True) or {}
     new_status = str(payload.get("status", "")).strip().lower()
 
@@ -133,34 +131,23 @@ def update_appointment(appt_id: int):
     if not appt:
         return jsonify({"error": "Appointment not found"}), 404
 
-    # ---- MVP auth rules ----
-    me = get_me_user()
-    # If you can’t read session here yet, you can temporarily bypass by setting headers:
-    # X-Demo-Role / X-Demo-Email
-    if not me:
-        return jsonify({"error": "Unauthorized (missing user context)"}), 401
+    role = session.get("role")
+    email = session.get("email")
 
-    role = str(me.get("role") or "").strip().lower()
-    email = str(me.get("email") or "").strip().lower()
+    if not role:
+        return jsonify({"error": "Unauthorized"}), 401
 
-    # Patients can only cancel their own appointment
     if role == "patient":
         appt_email = str(appt.get("email") or "").strip().lower()
-        if email != appt_email:
+        if email != appt_email or new_status != "cancelled":
             return jsonify({"error": "Forbidden"}), 403
-        if new_status != "cancelled":
-            return jsonify({"error": "Patients can only cancel appointments"}), 403
 
-    # Doctors/Admin can update any status (MVP)
-    elif role in ("doctor", "admin"):
-        pass
-    else:
+    elif role not in ("doctor", "admin"):
         return jsonify({"error": "Forbidden"}), 403
 
     old_status = str(appt.get("status") or "").strip().lower()
     appt["status"] = new_status
 
-    # ---- SMS on status change (non-blocking) ----
     sms_result = {"ok": False, "error": "not_sent"}
     try:
         if new_status != old_status:
