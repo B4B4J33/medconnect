@@ -31,4 +31,18 @@ def init_db():
                     status TEXT NOT NULL
                 );
             """)
+
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT NOT NULL UNIQUE,
+                    password_hash TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    phone TEXT,
+                    role TEXT NOT NULL,
+                    patient_id INTEGER,
+                    doctor_id INTEGER,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+            """)
         conn.commit()

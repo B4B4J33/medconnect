@@ -30,6 +30,15 @@ def list_appointments():
     doctor_id = request.args.get("doctor_id")
     email = request.args.get("email")
 
+    if role == "patient":
+        sess_email = (session.get("email") or "").strip().lower()
+        email = sess_email
+
+    if role == "doctor":
+        sess_doctor_id = session.get("doctor_id")
+        if sess_doctor_id is not None:
+            doctor_id = str(sess_doctor_id)
+
     if doctor_id is not None:
         try:
             did = int(doctor_id)
@@ -69,6 +78,11 @@ def create_appointment():
     missing = [k for k in required if not payload.get(k)]
     if missing:
         return jsonify({"error": "Missing required fields", "missing": missing}), 400
+
+    sess_email = (session.get("email") or "").strip().lower()
+    req_email = str(payload.get("email") or "").strip().lower()
+    if sess_email and req_email and sess_email != req_email:
+        return jsonify({"error": "Forbidden"}), 403
 
     try:
         doctor_id = int(payload["doctor_id"])
@@ -149,12 +163,11 @@ def update_appointment(appt_id: int):
 
     if role == "patient":
         appt_email = str(appt.get("email") or "").strip().lower()
-        req_email = str(payload.get("email") or "").strip().lower()
-        if req_email and req_email != appt_email:
+        sess_email = str(session.get("email") or "").strip().lower()
+        if sess_email != appt_email:
             return jsonify({"error": "Forbidden"}), 403
         if new_status != "cancelled":
             return jsonify({"error": "Forbidden"}), 403
-
     elif role in ("doctor", "admin"):
         pass
     else:
