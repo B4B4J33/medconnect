@@ -23,6 +23,9 @@
   let loggedUser = null;
   let skipPatientStep = false;
 
+  let DOCTORS = [];
+  let specialtyToDoctors = new Map();
+
   async function apiFetch(path, opts = {}) {
     return fetch(`${API_BASE}${path}`, {
       ...opts,
@@ -45,6 +48,15 @@
 
   function normRole(role) {
     return String(role || "").trim().toLowerCase();
+  }
+
+  function escapeHtml(v) {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function showStep(step) {
@@ -72,33 +84,6 @@
   function prevStepNumber(fromStep) {
     if (skipPatientStep && fromStep === 4) return 2;
     return fromStep - 1;
-  }
-
-  function buildReview() {
-    if (!el.reviewList) return;
-    const items = [
-      ["Specialty", val(el.specialty)],
-      ["Doctor", getDoctorLabel()],
-      ["Date", val(el.date)],
-      ["Time", val(el.time)],
-      ["Name", val(el.name)],
-      ["Phone", val(el.phone)],
-      ["Email", val(el.email)],
-    ];
-
-    el.reviewList.innerHTML = items
-      .filter(([, v]) => String(v || "").trim())
-      .map(([k, v]) => `<li><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</li>`)
-      .join("");
-  }
-
-  function escapeHtml(v) {
-    return String(v ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
   }
 
   function getDoctorId() {
@@ -141,6 +126,25 @@
     return true;
   }
 
+  function buildReview() {
+    if (!el.reviewList) return;
+
+    const items = [
+      ["Specialty", val(el.specialty)],
+      ["Doctor", getDoctorLabel()],
+      ["Date", val(el.date)],
+      ["Time", val(el.time)],
+      ["Name", val(el.name)],
+      ["Phone", val(el.phone)],
+      ["Email", val(el.email)],
+    ];
+
+    el.reviewList.innerHTML = items
+      .filter(([, v]) => String(v || "").trim())
+      .map(([k, v]) => `<li><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</li>`)
+      .join("");
+  }
+
   async function getMe() {
     const res = await apiFetch("/api/me", { method: "GET" });
     if (!res.ok) return null;
@@ -155,6 +159,74 @@
     if (!val(el.name)) setVal(el.name, user.name || "");
     if (!val(el.email)) setVal(el.email, user.email || "");
     if (!val(el.phone)) setVal(el.phone, user.phone || "");
+  }
+
+  async function loadDoctors() {
+    if (!el.specialty || !el.doctor) return;
+
+    el.specialty.innerHTML = `<option value="">-- Select Specialty --</option>`;
+    el.doctor.innerHTML = `<option value="">-- Select Doctor --</option>`;
+    el.doctor.disabled = true;
+
+    const res = await apiFetch("/api/doctors", { method: "GET" });
+    if (!res.ok) throw new Error("Failed to load doctors");
+
+    const data = await res.json().catch(() => null);
+
+    const list = Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data)
+      ? data
+      : Array.isArray(data?.doctors)
+      ? data.doctors
+      : [];
+
+    DOCTORS = list;
+
+    specialtyToDoctors = new Map();
+
+    DOCTORS.forEach((d) => {
+      const spec = String(d.specialty || "").trim();
+      if (!spec) return;
+      if (!specialtyToDoctors.has(spec)) specialtyToDoctors.set(spec, []);
+      specialtyToDoctors.get(spec).push(d);
+    });
+
+    const specialties = Array.from(specialtyToDoctors.keys()).sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    const options = specialties.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
+    el.specialty.insertAdjacentHTML("beforeend", options.join(""));
+  }
+
+  function onSpecialtyChange() {
+    if (!el.specialty || !el.doctor) return;
+
+    const chosen = val(el.specialty);
+
+    el.doctor.innerHTML = `<option value="">-- Select Doctor --</option>`;
+    el.doctor.disabled = true;
+
+    if (!chosen) return;
+
+    const doctors = specialtyToDoctors.get(chosen) || [];
+    if (!doctors.length) return;
+
+    const opts = doctors
+      .map((d) => {
+        const id = d.id ?? d.doctor_id;
+        const name = d.full_name || d.name || d.doctor || "";
+        if (id == null || !name) return "";
+        return `<option value="${escapeHtml(String(name))}" data-doctor-id="${escapeHtml(String(id))}">${escapeHtml(String(name))}</option>`;
+      })
+      .filter(Boolean)
+      .join("");
+
+    if (opts) {
+      el.doctor.insertAdjacentHTML("beforeend", opts);
+      el.doctor.disabled = false;
+    }
   }
 
   async function confirmBooking() {
@@ -191,7 +263,7 @@
 
     if (res.status === 401) {
       alert("Please log in first.");
-      window.location.href = "portal.html";
+      window.location.href = "portal.html?redirect=appointment.html";
       return;
     }
 
@@ -234,15 +306,13 @@
           return;
         }
 
-        const next = nextStepNumber(currentStep);
-
-        if (next === 4) buildReview();
-
         if (currentStep === 4) {
           await confirmBooking();
           return;
         }
 
+        const next = nextStepNumber(currentStep);
+        if (next === 4) buildReview();
         showStep(next);
       });
     }
@@ -256,10 +326,16 @@
       return;
     }
 
-    const role = normRole(loggedUser.role);
-    skipPatientStep = role === "patient";
-
+    skipPatientStep = normRole(loggedUser.role) === "patient";
     if (skipPatientStep) applyPatientAutofill(loggedUser);
+
+    try {
+      await loadDoctors();
+    } catch (e) {
+      alert("Unable to load doctors list.");
+    }
+
+    if (el.specialty) el.specialty.addEventListener("change", onSpecialtyChange);
 
     showStep(1);
     bindNav();
