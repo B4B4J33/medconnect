@@ -6,7 +6,6 @@ from app import app
 from app.db import init_db
 init_db()
 
-
 print("Flask app imported OK.")
 print("PORT =", os.environ.get("PORT", "5000"))
 

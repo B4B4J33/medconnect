@@ -2,20 +2,6 @@ from flask import Blueprint, request, session
 
 auth_bp = Blueprint("auth", __name__)
 
-
-from flask import Blueprint, jsonify
-from app.db import get_connection
-
-health_bp = Blueprint("health", __name__)
-
-@health_bp.get("/api/db-health")
-def db_health():
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1 AS ok;")
-            row = cur.fetchone()
-    return jsonify({"ok": True, "db": row}), 200
-
 # -----------------------------------------
 # Demo in-memory users (replace with DB later)
 # -----------------------------------------
