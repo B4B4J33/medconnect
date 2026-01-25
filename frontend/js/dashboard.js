@@ -1,10 +1,3 @@
-// - Auth gate via /api/me
-// - Welcome + role
-// - Logout
-// - Nav role rules on dashboard page
-// - Appointments load (with filter fallbacks)
-// - Reports load 
-
 (() => {
   const API_BASE =
     (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
@@ -25,6 +18,9 @@
     repEmpty: document.getElementById("dashRepEmpty"),
     repTableWrap: document.getElementById("dashRepTableWrap"),
     repTbody: document.getElementById("dashRepTbody"),
+
+    modal: document.getElementById("apptModal"),
+    modalBody: document.getElementById("apptModalBody"),
   };
 
   function setText(node, value) {
@@ -47,7 +43,7 @@
   }
 
   function portalUrl() {
-    return "portal.html";
+    return "portal.html?returnTo=" + encodeURIComponent("dashboard.html");
   }
 
   function escapeHtml(v) {
@@ -89,10 +85,8 @@
   async function doLogout() {
     try {
       await apiFetch("/api/auth/logout", { method: "POST" });
-    } catch (e) {
-      // ignore network errors; still redirect
-    }
-    window.location.href = portalUrl();
+    } catch (e) {}
+    window.location.href = "portal.html";
   }
 
   function bindLogout() {
@@ -103,7 +97,6 @@
     });
   }
 
-  // ===== Nav rules (on dashboard page) =====
   function applyDashboardNavRules(user) {
     const isAuth = !!user;
     const role = normRole(user?.role);
@@ -114,13 +107,10 @@
       if (li) li.hidden = !visible;
     }
 
-    // Logged in: show dashboard, hide portal/login. Logged out: opposite (but dashboard will redirect anyway).
     setLiVisibleByHref("dashboard.html", isAuth);
     setLiVisibleByHref("portal.html", !isAuth);
-    setLiVisibleByHref("login.html", !isAuth); // optional if ever used
+    setLiVisibleByHref("login.html", !isAuth);
 
-    // Role-only support (future-proof):
-    // <li data-roles="doctor,admin"><a href="...">...</a></li>
     document.querySelectorAll(".side-menu li[data-roles]").forEach((li) => {
       if (!isAuth) {
         li.hidden = true;
@@ -145,12 +135,79 @@
     return "Your upcoming appointments and quick actions will appear here.";
   }
 
-  // ===== Appointments =====
   function resetAppointmentsUI() {
     show(el.apptLoading);
     hide(el.apptEmpty);
     hide(el.apptTableWrap);
     if (el.apptTbody) el.apptTbody.innerHTML = "";
+  }
+
+  function openModal(appt) {
+    if (!el.modal || !el.modalBody) return;
+
+    const rows = [
+      ["Status", appt.status || appt.state || "scheduled"],
+      ["Specialty", appt.specialty || ""],
+      ["Doctor", appt.doctor || appt.doctor_name || ""],
+      ["Date", appt.date || ""],
+      ["Time", appt.time || ""],
+      ["Name", appt.name || ""],
+      ["Phone", appt.phone || ""],
+      ["Email", appt.email || ""],
+      ["Appointment ID", appt.id ?? ""],
+    ].filter(([, v]) => String(v || "").trim());
+
+    el.modalBody.innerHTML = `
+      <div class="mc-kv">
+        ${rows
+          .map(
+            ([k, v]) => `
+              <div class="mc-kv__k">${escapeHtml(k)}</div>
+              <div class="mc-kv__v">${escapeHtml(v)}</div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+
+    el.modal.hidden = false;
+    el.modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    if (!el.modal) return;
+    el.modal.hidden = true;
+    el.modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  function bindModal() {
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!t) return;
+
+      if (t.matches('[data-close="true"]')) {
+        closeModal();
+        return;
+      }
+
+      const btn = t.closest && t.closest(".js-appt-view");
+      if (!btn) return;
+
+      const row = btn.closest("tr");
+      const raw = row ? row.getAttribute("data-appt") : null;
+      if (!raw) return;
+
+      try {
+        const appt = JSON.parse(raw);
+        openModal(appt);
+      } catch (err) {}
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
   }
 
   function renderAppointments(items) {
@@ -172,11 +229,28 @@
       const phone = a.phone || "";
       const status = a.status || a.state || "scheduled";
 
-      // Placeholder action for next phase (view/cancel/reschedule)
-      const action = `<a href="appointment.html" class="btn ghost" style="padding:8px 12px; border-width:1px;">View</a>`;
+      const safeAppt = {
+        id: a.id ?? null,
+        status,
+        specialty: a.specialty || "",
+        doctor: a.doctor || a.doctor_name || "",
+        date,
+        time,
+        name,
+        phone,
+        email: a.email || "",
+      };
+
+      const action = `
+        <button type="button"
+          class="btn ghost js-appt-view"
+          style="padding:8px 12px; border-width:1px;">
+          View
+        </button>
+      `;
 
       return `
-        <tr>
+        <tr data-appt="${escapeHtml(JSON.stringify(safeAppt))}">
           <td>${escapeHtml(date)}</td>
           <td>${escapeHtml(time)}</td>
           <td>${escapeHtml(name)}</td>
@@ -234,7 +308,6 @@
     renderAppointments(items);
   }
 
-  // ===== Reports =====
   function resetReportsUI() {
     show(el.repLoading);
     hide(el.repEmpty);
@@ -281,7 +354,6 @@
   async function loadReports(user) {
     resetReportsUI();
 
-    // Graceful: if /api/reports doesn't exist yet, show empty state without crashing.
     const role = normRole(user.role);
     const patientId = user.patient_id;
     const doctorId = user.doctor_id;
@@ -305,14 +377,13 @@
       if (payload) break;
     }
 
-    // If no endpoint yet (404), payload stays null -> empty state
     const items = payload?.items || payload?.data || payload || [];
     renderReports(items);
   }
 
-  // ===== Init =====
   async function init() {
     bindLogout();
+    bindModal();
 
     if (el.dashIntro) el.dashIntro.textContent = "Loading your dashboard…";
     resetAppointmentsUI();
@@ -325,14 +396,13 @@
       return;
     }
 
-    // Expect: { success:true, user:{...} }
     if (!me.ok || !me.data || me.data.success !== true || !me.data.user) {
       if (el.dashIntro) {
         el.dashIntro.textContent = "We couldn’t load your dashboard. Please log in again.";
       }
       setTimeout(() => {
         window.location.href = portalUrl();
-      }, 1200);
+      }, 900);
       return;
     }
 
@@ -348,7 +418,7 @@
     if (el.dashIntro) el.dashIntro.textContent = introForRole(role);
 
     await loadAppointments(user);
-
+    await loadReports(user);
   }
 
   document.addEventListener("DOMContentLoaded", init);

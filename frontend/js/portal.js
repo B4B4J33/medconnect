@@ -5,20 +5,36 @@
     return document.getElementById(id);
   }
 
+  function isSafeRelativePath(p) {
+    if (!p) return false;
+    if (p.includes("://") || p.startsWith("//")) return false;
+    if (p.startsWith("javascript:")) return false;
+    if (!/^[a-z0-9_\-./?=&%#]+$/i.test(p)) return false;
+    return true;
+  }
+
   function getRedirectTarget() {
     const params = new URLSearchParams(window.location.search);
-    const target = params.get("redirect");
-    if (target && !target.includes("://") && !target.startsWith("//")) return target;
+
+    const returnTo = params.get("returnTo");
+    if (isSafeRelativePath(returnTo)) return decodeURIComponent(returnTo);
+
+    const redirect = params.get("redirect");
+    if (isSafeRelativePath(redirect)) return redirect;
+
     return "dashboard.html";
   }
 
   async function getMe() {
+    if (!API) return null;
+
     const res = await fetch(`${API}/api/me`, {
       method: "GET",
       credentials: "include",
     });
 
     if (!res.ok) return null;
+
     const data = await res.json().catch(() => null);
     if (!data || data.success !== true || !data.user) return null;
     return data.user;
@@ -78,7 +94,10 @@
         const password = ($("regPassword")?.value || "").trim();
 
         const { ok, data } = await postJSON("/api/auth/register", {
-          name, email, phone, password
+          name,
+          email,
+          phone,
+          password,
         });
 
         if (!ok || !data.success) {

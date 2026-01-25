@@ -2,6 +2,8 @@
   const API_BASE =
     (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
 
+  const DRAFT_KEY = "mc_appointment_draft_v1";
+
   const el = {
     form: document.getElementById("appointmentForm"),
     steps: Array.from(document.querySelectorAll(".form-step")),
@@ -23,7 +25,6 @@
   let loggedUser = null;
   let skipPatientStep = false;
 
-  let DOCTORS = [];
   let specialtyToDoctors = new Map();
 
   async function apiFetch(path, opts = {}) {
@@ -141,7 +142,10 @@
 
     el.reviewList.innerHTML = items
       .filter(([, v]) => String(v || "").trim())
-      .map(([k, v]) => `<li><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</li>`)
+      .map(
+        ([k, v]) =>
+          `<li><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</li>`
+      )
       .join("");
   }
 
@@ -155,10 +159,58 @@
 
   function applyPatientAutofill(user) {
     if (!user) return;
-
     if (!val(el.name)) setVal(el.name, user.name || "");
     if (!val(el.email)) setVal(el.email, user.email || "");
     if (!val(el.phone)) setVal(el.phone, user.phone || "");
+  }
+
+  function getPayloadFromUI() {
+    return {
+      specialty: val(el.specialty),
+      doctor: getDoctorLabel(),
+      doctor_id: getDoctorId(),
+      date: val(el.date),
+      time: val(el.time),
+      name: val(el.name),
+      phone: val(el.phone),
+      email: val(el.email),
+    };
+  }
+
+  function saveDraft(payload) {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    } catch {}
+  }
+
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  function clearDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {}
+  }
+
+  function applyDraftToUI(draft) {
+    if (!draft) return;
+    if (draft.specialty) setVal(el.specialty, draft.specialty);
+    if (draft.date) setVal(el.date, draft.date);
+    if (draft.time) setVal(el.time, draft.time);
+    if (draft.name) setVal(el.name, draft.name);
+    if (draft.phone) setVal(el.phone, draft.phone);
+    if (draft.email) setVal(el.email, draft.email);
+  }
+
+  function redirectToLoginReturnHere() {
+    window.location.href = `portal.html?returnTo=${encodeURIComponent("appointment.html")}`;
   }
 
   async function loadDoctors() {
@@ -181,11 +233,9 @@
       ? data.doctors
       : [];
 
-    DOCTORS = list;
-
     specialtyToDoctors = new Map();
 
-    DOCTORS.forEach((d) => {
+    list.forEach((d) => {
       const spec = String(d.specialty || "").trim();
       if (!spec) return;
       if (!specialtyToDoctors.has(spec)) specialtyToDoctors.set(spec, []);
@@ -196,8 +246,12 @@
       a.localeCompare(b)
     );
 
-    const options = specialties.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
-    el.specialty.insertAdjacentHTML("beforeend", options.join(""));
+    el.specialty.insertAdjacentHTML(
+      "beforeend",
+      specialties
+        .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
+        .join("")
+    );
   }
 
   function onSpecialtyChange() {
@@ -218,7 +272,11 @@
         const id = d.id ?? d.doctor_id;
         const name = d.full_name || d.name || d.doctor || "";
         if (id == null || !name) return "";
-        return `<option value="${escapeHtml(String(name))}" data-doctor-id="${escapeHtml(String(id))}">${escapeHtml(String(name))}</option>`;
+        return `<option value="${escapeHtml(
+          String(name)
+        )}" data-doctor-id="${escapeHtml(String(id))}">${escapeHtml(
+          String(name)
+        )}</option>`;
       })
       .filter(Boolean)
       .join("");
@@ -229,17 +287,34 @@
     }
   }
 
+  function restoreDoctorSelectionFromDraft(draft) {
+    if (!draft || !el.doctor) return;
+
+    const targetId = draft.doctor_id != null ? String(draft.doctor_id) : "";
+    const targetName = draft.doctor ? String(draft.doctor) : "";
+
+    const opts = Array.from(el.doctor.options || []);
+    const match =
+      opts.find((o) => String(o.getAttribute("data-doctor-id") || "") === targetId) ||
+      opts.find((o) => String(o.textContent || "").trim() === targetName);
+
+    if (match) el.doctor.value = match.value;
+  }
+
   async function confirmBooking() {
-    const payload = {
-      specialty: val(el.specialty),
-      doctor: getDoctorLabel(),
-      doctor_id: getDoctorId(),
-      date: val(el.date),
-      time: val(el.time),
-      name: val(el.name),
-      phone: val(el.phone),
-      email: val(el.email),
-    };
+    const user = await getMe();
+
+    const draftPayload = getPayloadFromUI();
+    saveDraft(draftPayload);
+
+    if (!user) {
+      redirectToLoginReturnHere();
+      return;
+    }
+
+    if (normRole(user.role) === "patient") applyPatientAutofill(user);
+
+    const payload = getPayloadFromUI();
 
     const missing = [];
     if (!payload.specialty) missing.push("specialty");
@@ -262,8 +337,7 @@
     });
 
     if (res.status === 401) {
-      alert("Please log in first.");
-      window.location.href = "portal.html?redirect=appointment.html";
+      redirectToLoginReturnHere();
       return;
     }
 
@@ -280,7 +354,7 @@
 
     const data = await res.json().catch(() => null);
     if (data && data.success === true && data.appointment) {
-      alert("Appointment booked successfully.");
+      clearDraft();
       window.location.href = "dashboard.html";
       return;
     }
@@ -319,23 +393,31 @@
   }
 
   async function init() {
-    loggedUser = await getMe();
-
-    if (!loggedUser) {
-      window.location.href = "portal.html?redirect=appointment.html";
-      return;
-    }
-
-    skipPatientStep = normRole(loggedUser.role) === "patient";
-    if (skipPatientStep) applyPatientAutofill(loggedUser);
+    const draft = loadDraft();
 
     try {
       await loadDoctors();
-    } catch (e) {
+    } catch {
       alert("Unable to load doctors list.");
     }
 
     if (el.specialty) el.specialty.addEventListener("change", onSpecialtyChange);
+
+    if (draft) {
+      applyDraftToUI(draft);
+
+      if (draft.specialty && el.specialty) {
+        setVal(el.specialty, draft.specialty);
+        onSpecialtyChange();
+        restoreDoctorSelectionFromDraft(draft);
+      }
+
+      buildReview();
+    }
+
+    loggedUser = await getMe();
+    skipPatientStep = normRole(loggedUser?.role) === "patient";
+    if (skipPatientStep) applyPatientAutofill(loggedUser);
 
     showStep(1);
     bindNav();
