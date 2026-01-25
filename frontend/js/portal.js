@@ -8,9 +8,20 @@
   function getRedirectTarget() {
     const params = new URLSearchParams(window.location.search);
     const target = params.get("redirect");
-    // Safety: allow only local pages
     if (target && !target.includes("://") && !target.startsWith("//")) return target;
     return "dashboard.html";
+  }
+
+  async function getMe() {
+    const res = await fetch(`${API}/api/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    if (!data || data.success !== true || !data.user) return null;
+    return data.user;
   }
 
   async function postJSON(path, payload) {
@@ -26,11 +37,16 @@
   }
 
   function showError(msg) {
-    // Keep it simple for now. If you already have a toast system, we’ll plug into it later.
     alert(msg);
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    const existingUser = await getMe();
+    if (existingUser) {
+      window.location.href = getRedirectTarget();
+      return;
+    }
+
     const loginForm = $("loginForm");
     const registerForm = $("registerForm");
 
