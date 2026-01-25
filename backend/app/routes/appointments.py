@@ -11,7 +11,7 @@ def find_doctor(doctor_id: int):
     return next((d for d in DOCTORS if d.get("id") == doctor_id), None)
 
 
-def _fetch_one(appt_id: int):
+def fetch_one(appt_id: int):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM appointments WHERE id = %s", (appt_id,))
@@ -21,27 +21,15 @@ def _fetch_one(appt_id: int):
 @appointments_bp.route("/api/appointments", methods=["GET"])
 def list_appointments():
     role = (session.get("role") or "").strip().lower()
-    email = (session.get("email") or "").strip().lower()
-    doctor_id_session = session.get("doctor_id")
-
     if not role:
         return jsonify({"error": "Unauthorized"}), 401
 
     where = []
     params = []
 
-    if role == "admin":
-        pass
-    elif role == "doctor":
-        where.append("doctor_id = %s")
-        params.append(doctor_id_session)
-    elif role == "patient":
-        where.append("LOWER(email) = %s")
-        params.append(email)
-    else:
-        return jsonify({"error": "Forbidden"}), 403
-
     doctor_id = request.args.get("doctor_id")
+    email = request.args.get("email")
+
     if doctor_id is not None:
         try:
             did = int(doctor_id)
@@ -50,10 +38,9 @@ def list_appointments():
         where.append("doctor_id = %s")
         params.append(did)
 
-    email_param = request.args.get("email")
-    if email_param:
+    if email:
         where.append("LOWER(email) = %s")
-        params.append(str(email_param).strip().lower())
+        params.append(str(email).strip().lower())
 
     sql = "SELECT * FROM appointments"
     if where:
@@ -70,7 +57,10 @@ def list_appointments():
 
 @appointments_bp.route("/api/appointments", methods=["POST"])
 def create_appointment():
-    if (session.get("role") or "").strip().lower() != "patient":
+    role = (session.get("role") or "").strip().lower()
+    if not role:
+        return jsonify({"error": "Unauthorized"}), 401
+    if role != "patient":
         return jsonify({"error": "Forbidden"}), 403
 
     payload = request.get_json(silent=True) or {}
@@ -90,7 +80,8 @@ def create_appointment():
         return jsonify({"error": f"Invalid doctor_id: {doctor_id}"}), 400
 
     doctor_name = str(payload.get("doctor", "")).strip().lower()
-    if doctor_name and str(doctor.get("full_name", "")).strip().lower() != doctor_name:
+    full_name = str(doctor.get("full_name", "")).strip().lower()
+    if doctor_name and full_name and doctor_name != full_name:
         return jsonify({"error": "doctor_id does not match selected doctor name"}), 400
 
     with get_connection() as conn:
@@ -141,28 +132,32 @@ def create_appointment():
 
 @appointments_bp.route("/api/appointments/<int:appt_id>", methods=["PATCH"])
 def update_appointment(appt_id: int):
-    payload = request.get_json(silent=True) or {}
-    new_status = str(payload.get("status", "")).strip().lower()
-
-    allowed_statuses = {"booked", "confirmed", "cancelled", "completed"}
-    if not new_status or new_status not in allowed_statuses:
-        return jsonify({"error": "Invalid status", "allowed": sorted(list(allowed_statuses))}), 400
-
     role = (session.get("role") or "").strip().lower()
-    email = (session.get("email") or "").strip().lower()
-
     if not role:
         return jsonify({"error": "Unauthorized"}), 401
 
-    appt = _fetch_one(appt_id)
+    payload = request.get_json(silent=True) or {}
+    new_status = str(payload.get("status", "")).strip().lower()
+
+    allowed = {"booked", "confirmed", "cancelled", "completed"}
+    if not new_status or new_status not in allowed:
+        return jsonify({"error": "Invalid status", "allowed": sorted(list(allowed))}), 400
+
+    appt = fetch_one(appt_id)
     if not appt:
         return jsonify({"error": "Appointment not found"}), 404
 
     if role == "patient":
         appt_email = str(appt.get("email") or "").strip().lower()
-        if email != appt_email or new_status != "cancelled":
+        req_email = str(payload.get("email") or "").strip().lower()
+        if req_email and req_email != appt_email:
             return jsonify({"error": "Forbidden"}), 403
-    elif role not in ("doctor", "admin"):
+        if new_status != "cancelled":
+            return jsonify({"error": "Forbidden"}), 403
+
+    elif role in ("doctor", "admin"):
+        pass
+    else:
         return jsonify({"error": "Forbidden"}), 403
 
     old_status = str(appt.get("status") or "").strip().lower()
