@@ -1,65 +1,76 @@
 from flask import Blueprint, jsonify, request, session
 
 from app.routes.doctors import DOCTORS
+from app.db import get_connection
 from sms import send_sms
 
 appointments_bp = Blueprint("appointments", __name__)
-
-APPOINTMENTS = []
 
 
 def find_doctor(doctor_id: int):
     return next((d for d in DOCTORS if d.get("id") == doctor_id), None)
 
 
-def find_appointment(appt_id: int):
-    return next((a for a in APPOINTMENTS if a.get("id") == appt_id), None)
+def _fetch_one(appt_id: int):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM appointments WHERE id = %s", (appt_id,))
+            return cur.fetchone()
 
 
 @appointments_bp.route("/api/appointments", methods=["GET"])
 def list_appointments():
-    role = session.get("role")
-    email = session.get("email")
+    role = (session.get("role") or "").strip().lower()
+    email = (session.get("email") or "").strip().lower()
     doctor_id_session = session.get("doctor_id")
 
     if not role:
         return jsonify({"error": "Unauthorized"}), 401
 
+    where = []
+    params = []
+
     if role == "admin":
-        result = APPOINTMENTS
-
+        pass
     elif role == "doctor":
-        result = [a for a in APPOINTMENTS if a.get("doctor_id") == doctor_id_session]
-
+        where.append("doctor_id = %s")
+        params.append(doctor_id_session)
     elif role == "patient":
-        result = [
-            a for a in APPOINTMENTS
-            if str(a.get("email", "")).strip().lower() == str(email).lower()
-        ]
-
+        where.append("LOWER(email) = %s")
+        params.append(email)
     else:
         return jsonify({"error": "Forbidden"}), 403
 
     doctor_id = request.args.get("doctor_id")
-    email_param = request.args.get("email")
-
     if doctor_id is not None:
         try:
             did = int(doctor_id)
         except ValueError:
             return jsonify({"error": "doctor_id must be an integer"}), 400
-        result = [a for a in result if a.get("doctor_id") == did]
+        where.append("doctor_id = %s")
+        params.append(did)
 
+    email_param = request.args.get("email")
     if email_param:
-        email_norm = str(email_param).strip().lower()
-        result = [a for a in result if str(a.get("email", "")).strip().lower() == email_norm]
+        where.append("LOWER(email) = %s")
+        params.append(str(email_param).strip().lower())
 
-    return jsonify({"count": len(result), "items": result}), 200
+    sql = "SELECT * FROM appointments"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY id DESC"
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, tuple(params))
+            rows = cur.fetchall()
+
+    return jsonify({"count": len(rows), "items": rows}), 200
 
 
 @appointments_bp.route("/api/appointments", methods=["POST"])
 def create_appointment():
-    if session.get("role") != "patient":
+    if (session.get("role") or "").strip().lower() != "patient":
         return jsonify({"error": "Forbidden"}), 403
 
     payload = request.get_json(silent=True) or {}
@@ -82,34 +93,44 @@ def create_appointment():
     if doctor_name and str(doctor.get("full_name", "")).strip().lower() != doctor_name:
         return jsonify({"error": "doctor_id does not match selected doctor name"}), 400
 
-    new_item = {
-        "id": len(APPOINTMENTS) + 1,
-        "specialty": payload["specialty"],
-        "doctor": payload["doctor"],
-        "doctor_id": doctor_id,
-        "date": payload["date"],
-        "time": payload["time"],
-        "name": payload["name"],
-        "phone": payload["phone"],
-        "email": payload["email"],
-        "status": "booked",
-    }
-
-    APPOINTMENTS.append(new_item)
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO appointments
+                    (doctor_id, doctor, specialty, date, time, name, email, phone, status)
+                VALUES
+                    (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING *;
+                """,
+                (
+                    doctor_id,
+                    payload["doctor"],
+                    payload["specialty"],
+                    payload["date"],
+                    payload["time"],
+                    payload["name"],
+                    payload["email"],
+                    payload["phone"],
+                    "booked",
+                ),
+            )
+            appt = cur.fetchone()
+        conn.commit()
 
     sms_result = {"ok": False, "error": "not_sent"}
     try:
         sms_text = (
-            f"MedConnect: Appointment confirmed with {new_item['doctor']} "
-            f"on {new_item['date']} at {new_item['time']}."
+            f"MedConnect: Appointment confirmed with {appt['doctor']} "
+            f"on {appt['date']} at {appt['time']}."
         )
-        sms_result = send_sms(new_item["phone"], sms_text)
+        sms_result = send_sms(appt["phone"], sms_text)
     except Exception as e:
         sms_result = {"ok": False, "error": str(e)}
 
     return jsonify({
         "success": True,
-        "appointment": new_item,
+        "appointment": appt,
         "sms": {
             "sent": bool(sms_result.get("ok")),
             "sid": sms_result.get("sid"),
@@ -127,41 +148,48 @@ def update_appointment(appt_id: int):
     if not new_status or new_status not in allowed_statuses:
         return jsonify({"error": "Invalid status", "allowed": sorted(list(allowed_statuses))}), 400
 
-    appt = find_appointment(appt_id)
-    if not appt:
-        return jsonify({"error": "Appointment not found"}), 404
-
-    role = session.get("role")
-    email = session.get("email")
+    role = (session.get("role") or "").strip().lower()
+    email = (session.get("email") or "").strip().lower()
 
     if not role:
         return jsonify({"error": "Unauthorized"}), 401
+
+    appt = _fetch_one(appt_id)
+    if not appt:
+        return jsonify({"error": "Appointment not found"}), 404
 
     if role == "patient":
         appt_email = str(appt.get("email") or "").strip().lower()
         if email != appt_email or new_status != "cancelled":
             return jsonify({"error": "Forbidden"}), 403
-
     elif role not in ("doctor", "admin"):
         return jsonify({"error": "Forbidden"}), 403
 
     old_status = str(appt.get("status") or "").strip().lower()
-    appt["status"] = new_status
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE appointments SET status = %s WHERE id = %s RETURNING *;",
+                (new_status, appt_id),
+            )
+            updated = cur.fetchone()
+        conn.commit()
 
     sms_result = {"ok": False, "error": "not_sent"}
     try:
         if new_status != old_status:
             sms_text = (
-                f"MedConnect: Your appointment with {appt.get('doctor','your doctor')} "
-                f"on {appt.get('date','')} at {appt.get('time','')} is now {new_status}."
+                f"MedConnect: Your appointment with {updated.get('doctor','your doctor')} "
+                f"on {updated.get('date','')} at {updated.get('time','')} is now {new_status}."
             )
-            sms_result = send_sms(appt.get("phone", ""), sms_text)
+            sms_result = send_sms(updated.get("phone", ""), sms_text)
     except Exception as e:
         sms_result = {"ok": False, "error": str(e)}
 
     return jsonify({
         "success": True,
-        "appointment": appt,
+        "appointment": updated,
         "sms": {
             "sent": bool(sms_result.get("ok")),
             "sid": sms_result.get("sid"),
