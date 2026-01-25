@@ -347,7 +347,8 @@
 
     if (el.dashIntro) el.dashIntro.textContent = introForRole(role);
 
-    await Promise.all([loadAppointments(user), loadReports(user)]);
+    await loadAppointments(user);
+
   }
 
   document.addEventListener("DOMContentLoaded", init);
