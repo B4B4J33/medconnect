@@ -220,8 +220,8 @@
     const res = await apiFetch("/api/me", { method: "GET" });
     if (!res.ok) return null;
     const data = await res.json().catch(() => null);
-    if (!data || data.success !== true || !data.user) return null;
-    return data.user;
+    if (!data || data.success !== true || !data.data || !data.data.user) return null;
+    return data.data.user;
   }
 
   function applyPatientAutofill(user) {
@@ -299,7 +299,9 @@
 
     const data = await res.json().catch(() => null);
 
-    const list = Array.isArray(data?.items)
+    const list = Array.isArray(data?.data?.items)
+      ? data.data.items
+      : Array.isArray(data?.items)
       ? data.items
       : Array.isArray(data)
       ? data
@@ -336,7 +338,7 @@
       const res = await apiFetch(`/api/doctors/${doctorId}/availability`, { method: "GET" });
       if (!res.ok) return null;
       const data = await res.json().catch(() => null);
-      const weekly = data?.weekly;
+      const weekly = data?.data?.weekly ?? data?.weekly;
       if (weekly && typeof weekly === "object") {
         availabilityCache.set(doctorId, weekly);
         return weekly;
@@ -355,7 +357,11 @@
       );
       if (!res.ok) return [];
       const data = await res.json().catch(() => null);
-      const items = Array.isArray(data?.booked) ? data.booked : [];
+      const items = Array.isArray(data?.data?.booked)
+        ? data.data.booked
+        : Array.isArray(data?.booked)
+        ? data.booked
+        : [];
       return items.map((t) => String(t || "").trim()).filter(Boolean);
     } catch (e) {}
     return [];
@@ -526,7 +532,7 @@
     }
 
     const data = await res.json().catch(() => null);
-    if (data && data.success === true && data.appointment) {
+    if (data && data.success === true && data.data?.appointment) {
       clearDraft();
       window.location.href = "dashboard.html";
       return;

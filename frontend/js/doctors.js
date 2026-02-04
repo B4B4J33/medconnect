@@ -91,7 +91,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(`${window.API_BASE_URL}/api/doctors`);
       if (!res.ok) throw new Error("Doctors API failed");
 
-      doctors = await res.json();
+      const payload = await res.json().catch(() => null);
+      doctors = Array.isArray(payload?.data?.items)
+        ? payload.data.items
+        : Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.items)
+        ? payload.items
+        : [];
       buildSpecialtyFilter(doctors);
       refresh();
     } catch (err) {

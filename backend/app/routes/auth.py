@@ -2,6 +2,7 @@ from flask import Blueprint, request, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.db import get_connection
+from app.routes.utils import success_response, error_response
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -119,10 +120,10 @@ def register():
         missing.append("phone")
 
     if missing:
-        return jsonify({"success": False, "error": "Missing required fields", "missing": missing}), 400
+        return error_response(400, "validation_error", "Missing required fields")
 
     if _find_user_by_email(email):
-        return jsonify({"success": False, "error": "Email already registered"}), 409
+        return error_response(409, "conflict", "Email already registered")
 
     pwd_hash = generate_password_hash(password)
 
@@ -147,7 +148,7 @@ def register():
         conn.commit()
 
     _set_session(user)
-    return jsonify({"success": True, "user": _public_user(user)}), 201
+    return success_response({"user": _public_user(user)}, 201)
 
 
 @auth_bp.post("/api/auth/login")
@@ -159,24 +160,24 @@ def login():
     password = (data.get("password") or "").strip()
 
     if not email or not password:
-        return jsonify({"success": False, "error": "Email and password required"}), 400
+        return error_response(400, "validation_error", "Email and password required")
 
     user = _find_user_by_email(email)
     if not user:
-        return jsonify({"success": False, "error": "Invalid credentials"}), 401
+        return error_response(401, "unauthorized", "Invalid credentials")
 
     stored_hash = user.get("password_hash") or ""
     if not check_password_hash(stored_hash, password):
-        return jsonify({"success": False, "error": "Invalid credentials"}), 401
+        return error_response(401, "unauthorized", "Invalid credentials")
 
     _set_session(user)
-    return jsonify({"success": True, "user": _public_user(user)}), 200
+    return success_response({"user": _public_user(user)})
 
 
 @auth_bp.post("/api/auth/logout")
 def logout():
     session.clear()
-    return jsonify({"success": True}), 200
+    return success_response({})
 
 
 @auth_bp.get("/api/me")
@@ -185,7 +186,7 @@ def me():
 
     user_id = session.get("user_id")
     if not user_id:
-        return jsonify({"success": False, "error": "Unauthorized"}), 401
+        return error_response(401, "unauthorized", "Unauthorized")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -194,6 +195,6 @@ def me():
 
     if not user:
         session.clear()
-        return jsonify({"success": False, "error": "Unauthorized"}), 401
+        return error_response(401, "unauthorized", "Unauthorized")
 
-    return jsonify({"success": True, "user": _public_user(user)}), 200
+    return success_response({"user": _public_user(user)})

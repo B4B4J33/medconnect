@@ -37,8 +37,8 @@
     if (!res.ok) return null;
 
     const data = await res.json().catch(() => null);
-    if (!data || data.success !== true || !data.user) return null;
-    return data.user;
+    if (!data || data.success !== true || !data.data?.user) return null;
+    return data.data.user;
   }
 
   async function postJSON(path, payload) {
@@ -77,7 +77,7 @@
         const { ok, data } = await postJSON("/api/auth/login", { email, password });
 
         if (!ok || !data.success) {
-          showError(data.error || "Login failed");
+          showError(data.error?.message || data.error || "Login failed");
           return;
         }
 
@@ -102,7 +102,7 @@
         });
 
         if (!ok || !data.success) {
-          showError(data.error || "Registration failed");
+          showError(data.error?.message || data.error || "Registration failed");
           return;
         }
 
