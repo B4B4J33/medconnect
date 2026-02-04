@@ -30,6 +30,7 @@
 
     const res = await fetch(`${API}/api/me`, {
       method: "GET",
+      cache: "no-store",
       credentials: "include",
     });
 

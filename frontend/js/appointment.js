@@ -34,6 +34,7 @@
         "Content-Type": "application/json",
         ...(opts.headers || {}),
       },
+      cache: "no-store",
       credentials: "include",
     });
   }
