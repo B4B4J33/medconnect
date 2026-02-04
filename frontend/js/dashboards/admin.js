@@ -136,6 +136,8 @@
         </div>
       </section>
 
+      <section class="dash-section" id="admin-quotes"></section>
+
       <section class="dash-section" id="admin-appointments">
         <div class="dash-section__head">
           <h2>Appointments</h2>
@@ -186,6 +188,7 @@
     `;
 
     const doctorsSection = sectionEls(document.getElementById("admin-doctors"));
+    const quoteSection = document.getElementById("admin-quotes");
     const apptSection = sectionEls(document.getElementById("admin-appointments"));
 
     const addDoctorBtn = document.getElementById("adminAddDoctorBtn");
@@ -376,7 +379,7 @@
         return `
           <label>
             <input type="checkbox" name="availability_days" value="${escapeHtml(day)}" ${checked}>
-            ${escapeHtml(DAY_LABELS[day])}
+            <span>${escapeHtml(DAY_LABELS[day])}</span>
           </label>
         `;
       }).join("");
@@ -530,6 +533,18 @@
 
         el.closeModal();
         loadDoctors();
+
+        const tempPassword = data?.data?.temp_password;
+        if (tempPassword && !isEdit) {
+          const body = `
+            <div class="dash-form">
+              <p>The doctor account has been created.</p>
+              <p><strong>Temporary password:</strong> ${escapeHtml(tempPassword)}</p>
+              <p>Share this password with the doctor. They can log in and change it later.</p>
+            </div>
+          `;
+          el.openModal({ title: "Doctor login created", body });
+        }
       });
     }
 
@@ -613,6 +628,14 @@
         if (apptFrom) apptFrom.value = "";
         if (apptTo) apptTo.value = "";
         applyFilters();
+      });
+    }
+
+    if (quoteSection && window.DashboardsAdminQuoteRequests?.initSection) {
+      window.DashboardsAdminQuoteRequests.initSection({
+        apiBase,
+        el,
+        sectionRoot: quoteSection,
       });
     }
 

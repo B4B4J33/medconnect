@@ -198,3 +198,27 @@ def me():
         return error_response(401, "unauthorized", "Unauthorized")
 
     return success_response({"user": _public_user(user)})
+
+
+@auth_bp.post("/api/auth/forgot-password")
+def forgot_password():
+    data = request.get_json(silent=True) or {}
+
+    email = _norm_email(data.get("email"))
+    phone = (data.get("phone") or "").strip()
+
+    if not email:
+        return error_response(400, "validation_error", "Email is required")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO password_reset_requests (email, phone)
+                VALUES (%s, %s)
+                """,
+                (email, phone or None),
+            )
+        conn.commit()
+
+    return success_response({"message": "Password reset request received"})

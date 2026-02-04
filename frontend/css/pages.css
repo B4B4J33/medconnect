@@ -1414,6 +1414,17 @@ input, select {
   gap: 6px;
 }
 
+.dashboard .dash-form__row label {
+  font-weight: 600;
+  color: #333;
+}
+
+.dashboard .dash-form__row input,
+.dashboard .dash-form__row select,
+.dashboard .dash-form__row textarea {
+  margin: 0;
+}
+
 .dashboard .dash-form__grid {
   display: grid;
   gap: 10px;
@@ -1424,6 +1435,48 @@ input, select {
   display: grid;
   gap: 6px 12px;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.dashboard .dash-checkbox-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  user-select: none;
+}
+
+.dashboard .dash-checkbox-grid input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  display: inline-grid;
+  place-content: center;
+  background: #fff;
+}
+
+.dashboard .dash-checkbox-grid input[type="checkbox"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  transform: scale(0);
+  transition: transform 0.12s ease-in-out;
+  background: var(--color-accent);
+}
+
+.dashboard .dash-checkbox-grid input[type="checkbox"]:checked {
+  border-color: var(--color-accent);
+  background: #e0e7ff;
+}
+
+.dashboard .dash-checkbox-grid input[type="checkbox"]:checked::before {
+  transform: scale(1);
 }
 
 .dashboard textarea {

@@ -199,6 +199,7 @@
       items.push({ label: "Appointments", target: "doctor-appointments" });
     } else if (role === "admin") {
       items.push({ label: "Doctors", target: "admin-doctors" });
+      items.push({ label: "Quote Requests", target: "admin-quotes" });
       items.push({ label: "Appointments", target: "admin-appointments" });
     }
 

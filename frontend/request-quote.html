@@ -1,0 +1,226 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Quote - MedConnect</title>
+  <link rel="stylesheet" href="css/request-quote.css" />
+</head>
+<body>
+  <main class="rq-page">
+    <div class="rq-container">
+      <div id="quoteSuccess" class="rq-banner" hidden>Request submitted successfully.</div>
+      <div id="quoteError" class="rq-banner rq-banner--error" hidden></div>
+
+      <form id="quoteForm" novalidate>
+        <div class="rq-section">
+          <div class="rq-grid">
+            <div class="rq-field">
+              <label class="rq-label">Name *</label>
+              <div class="rq-name-grid">
+                <div class="rq-field">
+                  <input
+                    type="text"
+                    id="firstName"
+                    name="first_name"
+                    placeholder="First name"
+                    data-clear-for="first_name"
+                    required
+                  />
+                  <div class="rq-error" data-error-for="first_name" hidden></div>
+                </div>
+                <div class="rq-field">
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="last_name"
+                    placeholder="Last name"
+                    data-clear-for="last_name"
+                    required
+                  />
+                  <div class="rq-error" data-error-for="last_name" hidden></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rq-field">
+              <label class="rq-label" for="gender">Gender *</label>
+              <select id="gender" name="gender" data-clear-for="gender" required>
+                <option value="">Select</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Other">Other</option>
+              </select>
+              <div class="rq-error" data-error-for="gender" hidden></div>
+            </div>
+
+            <div class="rq-placeholder"></div>
+          </div>
+
+          <div class="rq-grid rq-section">
+            <div class="rq-field">
+              <label class="rq-label" for="dob">Date of birth *</label>
+              <input type="date" id="dob" name="dob" data-clear-for="dob" required />
+              <div class="rq-error" data-error-for="dob" hidden></div>
+            </div>
+            <div class="rq-field">
+              <label class="rq-label" for="phone">Phone number *</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="+1 (000) 000-0000"
+                data-clear-for="phone"
+                required
+              />
+              <div class="rq-error" data-error-for="phone" hidden></div>
+            </div>
+            <div class="rq-field">
+              <label class="rq-label" for="email">Email *</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                data-clear-for="email"
+                required
+              />
+              <div class="rq-error" data-error-for="email" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rq-section">
+          <div class="rq-grid">
+            <div class="rq-field">
+              <label class="rq-label">Service Category *</label>
+              <div class="rq-checkbox-list">
+                <label>
+                  <input type="checkbox" name="service_categories" value="General Consultation" data-clear-for="service_categories" />
+                  <span>General Consultation</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Dental Services" data-clear-for="service_categories" />
+                  <span>Dental Services</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Specialist Appointment" data-clear-for="service_categories" />
+                  <span>Specialist Appointment</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Diagnostic Tests" data-clear-for="service_categories" />
+                  <span>Diagnostic Tests</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Preventive Care" data-clear-for="service_categories" />
+                  <span>Preventive Care</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Home Care Services" data-clear-for="service_categories" />
+                  <span>Home Care Services</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Wellness Programs" data-clear-for="service_categories" />
+                  <span>Wellness Programs</span>
+                </label>
+                <label>
+                  <input type="checkbox" name="service_categories" value="Other" data-clear-for="service_categories" />
+                  <span>Other</span>
+                </label>
+              </div>
+              <div class="rq-error" data-error-for="service_categories" hidden></div>
+            </div>
+
+            <div class="rq-field">
+              <label class="rq-label" for="doctorSelect">Preferred Doctor</label>
+              <select id="doctorSelect" name="doctor_id" data-clear-for="doctor_id">
+                <option value="">Select a doctor</option>
+              </select>
+              <div class="rq-error" data-error-for="doctor_id" hidden></div>
+            </div>
+
+            <div class="rq-field">
+              <label class="rq-label" for="message">Message *</label>
+              <textarea
+                id="message"
+                name="message"
+                placeholder="Tell us what you need"
+                data-clear-for="message"
+                required
+              ></textarea>
+              <div class="rq-error" data-error-for="message" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rq-section">
+          <div class="rq-upload-block">
+            <label class="rq-label">Supporting Documents</label>
+            <div class="rq-drop" id="documentsDrop">
+              <div>Drop files here or</div>
+              <button type="button" class="rq-upload-btn" id="documentsUploadBtn">Upload files</button>
+              <input
+                type="file"
+                id="documentsInput"
+                name="documents[]"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                hidden
+              />
+            </div>
+            <div class="rq-helper">
+              Accepted file types: pdf, jpg, jpeg, png. Max file size: 5 MB.
+            </div>
+            <div class="rq-file-list" id="documentsList"></div>
+            <div class="rq-error" data-error-for="documents" hidden></div>
+          </div>
+
+          <div class="rq-upload-block">
+            <label class="rq-label">Identity Document *</label>
+            <div class="rq-drop" id="idDocumentDrop">
+              <div>Drop files here or</div>
+              <button type="button" class="rq-upload-btn" id="idUploadBtn">Upload files</button>
+              <input
+                type="file"
+                id="idDocumentInput"
+                name="id_document"
+                accept=".pdf,.jpg,.jpeg,.png"
+                hidden
+              />
+            </div>
+            <div class="rq-helper">
+              Accepted file types: pdf, jpg, jpeg, png. Max file size: 5 MB.
+            </div>
+            <div class="rq-file-list" id="idList"></div>
+            <div class="rq-error" data-error-for="id_document" hidden></div>
+          </div>
+        </div>
+
+        <div class="rq-section">
+          <div class="rq-field">
+            <label class="rq-label">Consent *</label>
+            <div class="rq-consent-row">
+              <input type="checkbox" id="consent" name="consent" data-clear-for="consent" />
+              <label for="consent">I agree to the privacy policy.</label>
+            </div>
+            <div class="rq-error" data-error-for="consent" hidden></div>
+          </div>
+
+          <div class="rq-captcha">
+            <label class="rq-label">CAPTCHA</label>
+            <div class="rq-captcha-box">
+              <div class="rq-captcha-check"></div>
+              <div>I&apos;m not a robot</div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="rq-submit">Submit</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/request-quote.js"></script>
+</body>
+</html>

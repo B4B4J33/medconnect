@@ -1,5 +1,7 @@
 import json
+import secrets
 from flask import Blueprint, jsonify, request, session
+from werkzeug.security import generate_password_hash
 
 from app.db import get_connection
 from app.routes.utils import success_response
@@ -24,6 +26,11 @@ def _require_admin():
 
 def _norm_email(email: str) -> str:
     return (email or "").strip().lower()
+
+
+def _generate_temp_password(length: int = 10) -> str:
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 def _format_time(value):
@@ -186,6 +193,7 @@ def _fetch_doctor_row(doctor_id: int):
 def list_doctors():
     specialty = request.args.get("specialty")
     available = request.args.get("available")
+    active = (request.args.get("active") or "").strip().lower()
 
     sql = "SELECT * FROM doctors WHERE is_active = TRUE"
     params = []
@@ -196,6 +204,27 @@ def list_doctors():
 
     if available is not None and str(available).strip().lower() == "false":
         return success_response({"count": 0, "items": []})
+
+    if active in ("1", "true", "yes"):
+        sql = """
+            SELECT id, full_name, specialty
+            FROM doctors
+            WHERE is_active = TRUE
+            ORDER BY full_name ASC
+        """
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                rows = cur.fetchall()
+
+        return jsonify([
+            {
+                "id": r.get("id"),
+                "full_name": r.get("full_name"),
+                "specialty": r.get("specialty"),
+            }
+            for r in rows or []
+        ]), 200
 
     sql += " ORDER BY id ASC"
 
@@ -276,11 +305,18 @@ def admin_create_doctor():
     if (end_min - start_min) < 60 or (end_min - start_min) % 60 != 0:
         return _error(400, "validation_error", "availability window must align to 1-hour slots")
 
+    temp_password = _generate_temp_password()
+    pwd_hash = generate_password_hash(temp_password)
+
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT 1 FROM doctors WHERE LOWER(email) = %s LIMIT 1", (email,))
             if cur.fetchone():
                 return _error(409, "conflict", "email must be unique")
+
+            cur.execute("SELECT 1 FROM users WHERE LOWER(email) = %s LIMIT 1", (email,))
+            if cur.fetchone():
+                return _error(409, "conflict", "user with email already exists")
 
             cur.execute(
                 """
@@ -303,9 +339,30 @@ def admin_create_doctor():
                 ),
             )
             row = cur.fetchone()
+
+            cur.execute(
+                """
+                INSERT INTO users (email, password_hash, name, phone, role, doctor_id)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    email,
+                    pwd_hash,
+                    full_name,
+                    phone,
+                    "doctor",
+                    row.get("id"),
+                ),
+            )
         conn.commit()
 
-    return jsonify({"success": True, "data": _serialize_doctor(row)}), 201
+    return jsonify({
+        "success": True,
+        "data": {
+            "doctor": _serialize_doctor(row),
+            "temp_password": temp_password,
+        },
+    }), 201
 
 
 @doctors_bp.route("/api/admin/doctors/<int:doctor_id>", methods=["PATCH"])
@@ -403,6 +460,13 @@ def admin_update_doctor(doctor_id: int):
                 if cur.fetchone():
                     return _error(409, "conflict", "email must be unique")
 
+                cur.execute(
+                    "SELECT 1 FROM users WHERE LOWER(email) = %s AND doctor_id <> %s LIMIT 1",
+                    (updates["email"], doctor_id),
+                )
+                if cur.fetchone():
+                    return _error(409, "conflict", "user with email already exists")
+
     fields = []
     values = []
     for key, value in updates.items():
@@ -414,10 +478,31 @@ def admin_update_doctor(doctor_id: int):
 
     sql = "UPDATE doctors SET " + ", ".join(fields) + " WHERE id = %s RETURNING *;"
 
+    updated = None
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, tuple(values))
             updated = cur.fetchone()
+
+            user_updates = {}
+            if "full_name" in updates:
+                user_updates["name"] = updates["full_name"]
+            if "email" in updates:
+                user_updates["email"] = updates["email"]
+            if "phone" in updates:
+                user_updates["phone"] = updates["phone"]
+
+            if user_updates:
+                fields = []
+                params = []
+                for key, value in user_updates.items():
+                    fields.append(f"{key} = %s")
+                    params.append(value)
+                params.append(doctor_id)
+                cur.execute(
+                    f"UPDATE users SET {', '.join(fields)} WHERE doctor_id = %s;",
+                    tuple(params),
+                )
         conn.commit()
 
     return jsonify({"success": True, "data": _serialize_doctor(updated)}), 200

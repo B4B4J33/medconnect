@@ -80,6 +80,16 @@
     return keys[d.getDay()];
   }
 
+  function availableDaysFromWeekly(weekly) {
+    if (!weekly || typeof weekly !== "object") return null;
+    const days = [];
+    Object.keys(weekly).forEach((key) => {
+      const windows = weekly[key];
+      if (Array.isArray(windows) && windows.length > 0) days.push(key);
+    });
+    return days;
+  }
+
   function timeToMinutes(t) {
     const parts = String(t || "").split(":");
     if (parts.length < 2) return NaN;
@@ -387,6 +397,17 @@
 
     const weekly = await fetchWeeklyAvailability(doctorId);
     const dayKey = weekdayKey(dateStr);
+    const availableDays = availableDaysFromWeekly(weekly);
+    if (el.date) el.date.setCustomValidity("");
+
+    if (availableDays && dayKey && !availableDays.includes(dayKey)) {
+      if (el.date) {
+        el.date.setCustomValidity("Doctor is not available on this day.");
+        el.date.reportValidity();
+      }
+      return;
+    }
+
     const windows =
       weekly && dayKey && Array.isArray(weekly[dayKey])
         ? weekly[dayKey]

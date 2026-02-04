@@ -25,6 +25,7 @@ from app.routes.doctors import doctors_bp
 from app.routes.doctor import doctor_bp
 from app.routes.auth import auth_bp
 from app.routes.db_health import db_health_bp
+from app.routes.quote_requests import quote_requests_bp
 from availability import availability_bp
 
 app.register_blueprint(appointments_bp)
@@ -34,6 +35,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(db_health_bp)
 app.register_blueprint(reports_bp)
 app.register_blueprint(availability_bp)
+app.register_blueprint(quote_requests_bp)
 
 
 @app.get("/api/health")
