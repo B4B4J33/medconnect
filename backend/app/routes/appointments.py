@@ -17,6 +17,50 @@ def fetch_one(appt_id: int):
             cur.execute("SELECT * FROM appointments WHERE id = %s", (appt_id,))
             return cur.fetchone()
 
+@appointments_bp.route("/api/appointments/slots", methods=["GET"])
+def get_booked_slots():
+    role = (session.get("role") or "").strip().lower()
+    if not role:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    doctor_id = request.args.get("doctor_id")
+    date = request.args.get("date")
+
+    if not doctor_id or not date:
+        return jsonify({"error": "doctor_id and date are required"}), 400
+
+    try:
+        did = int(doctor_id)
+    except ValueError:
+        return jsonify({"error": "doctor_id must be an integer"}), 400
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT time, status
+                FROM appointments
+                WHERE doctor_id = %s AND date = %s
+                """,
+                (did, date),
+            )
+            rows = cur.fetchall()
+
+    booked = []
+    for row in rows or []:
+        status = str(row.get("status") or "").strip().lower()
+        if status == "cancelled":
+            continue
+        t = str(row.get("time") or "").strip()
+        if t:
+            booked.append(t)
+
+    return jsonify({
+        "doctor_id": did,
+        "date": date,
+        "booked": sorted(list(set(booked))),
+    }), 200
+
 
 @appointments_bp.route("/api/appointments", methods=["GET"])
 def list_appointments():
@@ -100,6 +144,19 @@ def create_appointment():
 
     with get_connection() as conn:
         with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 1
+                FROM appointments
+                WHERE doctor_id = %s AND date = %s AND time = %s
+                  AND LOWER(COALESCE(status, '')) <> 'cancelled'
+                LIMIT 1;
+                """,
+                (doctor_id, payload["date"], payload["time"]),
+            )
+            if cur.fetchone():
+                return jsonify({"error": "Selected slot is no longer available"}), 409
+
             cur.execute(
                 """
                 INSERT INTO appointments

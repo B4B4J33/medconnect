@@ -23,7 +23,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function buildSpecialtyFilter(items) {
     const unique = [...new Set(items.map(d => normalize(d.specialty)))].filter(Boolean);
 
-    specialtyFilter.innerHTML = `<option value="">All Specialties</option>`;
+    const currentPlaceholder =
+      specialtyFilter.querySelector('option[value=""]')?.textContent || "All Specialties";
+
+    specialtyFilter.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = currentPlaceholder;
+    placeholder.setAttribute("data-i18n", "filter_all");
+    specialtyFilter.appendChild(placeholder);
 
     unique.forEach(spec => {
       const opt = document.createElement("option");
