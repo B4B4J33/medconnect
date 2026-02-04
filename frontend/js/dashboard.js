@@ -23,6 +23,9 @@
     modalBody: document.getElementById("apptModalBody"),
   };
 
+  let currentUser = null;
+  let translations = {};
+
   function setText(node, value) {
     if (!node) return;
     node.textContent = value == null ? "" : String(value);
@@ -40,6 +43,22 @@
 
   function normRole(role) {
     return String(role || "").trim().toLowerCase();
+  }
+
+  async function loadTranslations() {
+    const lang = localStorage.getItem("lang") || "en";
+    try {
+      const res = await fetch(`lang/${lang}.json`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && typeof data === "object") translations = data;
+    } catch (e) {}
+  }
+
+  function t(key, fallback) {
+    const value = translations[key];
+    if (value != null && String(value).trim()) return String(value);
+    return fallback;
   }
 
   function portalUrl() {
@@ -192,6 +211,13 @@
         return;
       }
 
+      const cancelBtn = t.closest && t.closest(".js-appt-cancel");
+      if (cancelBtn) {
+        const id = cancelBtn.getAttribute("data-appt-id");
+        if (id) cancelAppointment(id);
+        return;
+      }
+
       const btn = t.closest && t.closest(".js-appt-view");
       if (!btn) return;
 
@@ -210,7 +236,32 @@
     });
   }
 
-  function renderAppointments(items) {
+  function canCancelStatus(status) {
+    const s = String(status || "").trim().toLowerCase();
+    return s === "booked" || s === "confirmed";
+  }
+
+  async function cancelAppointment(apptId) {
+    const ok = window.confirm(
+      t("confirm_cancel_appt", "Cancel this appointment?")
+    );
+    if (!ok) return;
+
+    const res = await apiFetch(`/api/appointments/${encodeURIComponent(apptId)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "cancelled" }),
+    });
+
+    if (!res.ok) {
+      alert(t("cancel_failed", "Unable to cancel appointment."));
+      return;
+    }
+
+    alert(t("cancel_success", "Appointment cancelled."));
+    if (currentUser) await loadAppointments(currentUser);
+  }
+
+  function renderAppointments(items, role) {
     hide(el.apptLoading);
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -228,6 +279,7 @@
       const name = a.name || "";
       const phone = a.phone || "";
       const status = a.status || a.state || "scheduled";
+      const statusNorm = String(status || "").trim().toLowerCase();
 
       const safeAppt = {
         id: a.id ?? null,
@@ -241,13 +293,32 @@
         email: a.email || "",
       };
 
+      const canCancel =
+        !!safeAppt.id &&
+        canCancelStatus(statusNorm) &&
+        ["patient", "doctor", "admin"].includes(normRole(role));
+
       const action = `
         <button type="button"
           class="btn ghost js-appt-view"
           style="padding:8px 12px; border-width:1px;">
-          View
+          ${escapeHtml(t("btn_view", "View"))}
         </button>
+        ${
+          canCancel
+            ? `
+              <button type="button"
+                class="btn ghost js-appt-cancel"
+                data-appt-id="${escapeHtml(String(safeAppt.id))}"
+                style="padding:8px 12px; border-width:1px; margin-left:6px;">
+                ${escapeHtml(t("btn_cancel", "Cancel"))}
+              </button>
+            `
+            : ""
+        }
       `;
+
+      const statusClass = `mc-status mc-status--${escapeHtml(statusNorm || "unknown")}`;
 
       return `
         <tr data-appt="${escapeHtml(JSON.stringify(safeAppt))}">
@@ -255,7 +326,7 @@
           <td>${escapeHtml(time)}</td>
           <td>${escapeHtml(name)}</td>
           <td>${escapeHtml(phone)}</td>
-          <td>${escapeHtml(status)}</td>
+          <td><span class="${statusClass}">${escapeHtml(status)}</span></td>
           <td>${action}</td>
         </tr>
       `;
@@ -305,7 +376,7 @@
     }
 
     const items = payload?.items || payload?.data || payload || [];
-    renderAppointments(items);
+    renderAppointments(items, role);
   }
 
   function resetReportsUI() {
@@ -384,6 +455,7 @@
   async function init() {
     bindLogout();
     bindModal();
+    await loadTranslations();
 
     if (el.dashIntro) el.dashIntro.textContent = "Loading your dashboard…";
     resetAppointmentsUI();
@@ -407,6 +479,7 @@
     }
 
     const user = me.data.user;
+    currentUser = user;
     const name = user.name || user.email || "User";
     const role = normRole(user.role) || "patient";
 

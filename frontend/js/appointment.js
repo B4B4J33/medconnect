@@ -393,6 +393,12 @@
   }
 
   async function init() {
+    loggedUser = await getMe();
+    if (!loggedUser) {
+      redirectToLoginReturnHere();
+      return;
+    }
+
     const draft = loadDraft();
 
     try {
@@ -415,7 +421,6 @@
       buildReview();
     }
 
-    loggedUser = await getMe();
     skipPatientStep = normRole(loggedUser?.role) === "patient";
     if (skipPatientStep) applyPatientAutofill(loggedUser);
 
