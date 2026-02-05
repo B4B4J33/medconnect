@@ -1432,38 +1432,36 @@ input, select {
 }
 
 .dashboard .dash-fieldset {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 14px;
-  padding: 12px;
+  border: 0;
+  padding: 0;
+  margin: 0;
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .dashboard .dash-fieldset legend {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #333;
-  padding: 0 6px;
+  padding: 0;
+  margin: 0 0 6px;
 }
 
 .dashboard .dash-fieldset__rows {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dashboard .dash-fieldset__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.02);
+  gap: 8px;
+  padding: 4px 0;
 }
 
 .dashboard .dash-fieldset__row--solo {
-  border-radius: 12px;
+  padding: 4px 0;
 }
 
 .dashboard .dash-fieldset__label {
@@ -1774,6 +1772,29 @@ input, select {
   margin-top: 14px;
   display: flex;
   justify-content: flex-end;
+}
+
+.mc-modal--doctor .mc-modal__panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 120px);
+}
+
+.mc-modal--doctor .mc-modal__body {
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.mc-modal--doctor .mc-modal__footer {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 12px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .mc-kv {

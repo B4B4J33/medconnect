@@ -609,10 +609,10 @@
             </div>
           </fieldset>
           <div class="dash-form__row">
-            <div class="dash-fieldset__row dash-fieldset__row--solo">
-              <label class="dash-fieldset__label" for="doctorActive">Active</label>
+            <label class="dash-fieldset__row dash-fieldset__row--solo">
+              <span class="dash-fieldset__label">Active</span>
               <input class="dash-check" type="checkbox" id="doctorActive" ${doctor?.is_active !== false ? "checked" : ""}>
-            </div>
+            </label>
           </div>
           <div class="dash-error" id="doctorFormError" hidden></div>
         </form>
@@ -626,6 +626,22 @@
       el.openModal({ title: isEdit ? "Edit doctor" : "Add doctor", body, footer });
 
       const modalRoot = el.modal.root;
+      if (!modalRoot) return;
+      modalRoot.classList.add("mc-modal--doctor");
+      let escHandler = null;
+      const cleanupDoctorModal = () => {
+        modalRoot.classList.remove("mc-modal--doctor");
+        if (escHandler) {
+          document.removeEventListener("keydown", escHandler, true);
+        }
+      };
+      escHandler = (e) => {
+        if (e.key === "Escape") cleanupDoctorModal();
+      };
+      document.addEventListener("keydown", escHandler, true);
+      modalRoot.querySelectorAll('[data-close="true"]').forEach((btn) => {
+        btn.addEventListener("click", cleanupDoctorModal, { once: true });
+      });
       const saveBtn = modalRoot.querySelector('[data-action="save-doctor"]');
       const errorBox = modalRoot.querySelector("#doctorFormError");
 
@@ -721,6 +737,7 @@
           return;
         }
 
+        cleanupDoctorModal();
         el.closeModal();
         loadDoctors();
 
