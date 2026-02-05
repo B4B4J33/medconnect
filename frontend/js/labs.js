@@ -9,6 +9,7 @@
   const errorMessageEl = document.getElementById("labsErrorMessage");
   const retryBtn = document.getElementById("labsRetry");
   const emptyEl = document.getElementById("labsEmpty");
+  const defaultErrorMessage = "Unable to load packages.";
 
   if (!anchorsEl || !listEl || !statusEl || !errorEl || !errorMessageEl || !retryBtn || !emptyEl) {
     return;
@@ -150,10 +151,10 @@
 
     if (error && !loading && !hasPackages) {
       errorEl.hidden = false;
-      errorMessageEl.textContent = error;
+      errorMessageEl.textContent = error || defaultErrorMessage;
     } else {
       errorEl.hidden = true;
-      errorMessageEl.textContent = "";
+      errorMessageEl.textContent = defaultErrorMessage;
     }
 
     if (!loading && !error && !hasPackages) {
