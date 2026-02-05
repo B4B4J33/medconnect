@@ -2,6 +2,10 @@
   background: #f9f9f9;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .labs-hero {
   padding: var(--spacing-4) var(--spacing-3) var(--spacing-2);
   text-align: center;

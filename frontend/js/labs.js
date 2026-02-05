@@ -139,36 +139,42 @@
     });
   }
 
-  function renderState({ loading = false, error = "", packages = [] }) {
-    const hasPackages = Array.isArray(packages) && packages.length > 0;
+  function hideAllStates() {
+    statusEl.classList.add("hidden");
+    errorEl.classList.add("hidden");
+    emptyEl.classList.add("hidden");
+    anchorsEl.classList.add("hidden");
+    listEl.classList.add("hidden");
+  }
 
-    if (loading) {
-      statusEl.textContent = "Loading packages...";
-      statusEl.hidden = false;
-    } else {
-      statusEl.hidden = true;
-    }
+  function showLoading() {
+    hideAllStates();
+    statusEl.textContent = "Loading packages...";
+    statusEl.classList.remove("hidden");
+    anchorsEl.innerHTML = "";
+    listEl.innerHTML = "";
+  }
 
-    if (error && !loading && !hasPackages) {
-      errorEl.hidden = false;
-      errorMessageEl.textContent = error || defaultErrorMessage;
-    } else {
-      errorEl.hidden = true;
-      errorMessageEl.textContent = defaultErrorMessage;
-    }
+  function showError(message) {
+    hideAllStates();
+    errorMessageEl.textContent = message || defaultErrorMessage;
+    errorEl.classList.remove("hidden");
+    anchorsEl.innerHTML = "";
+    listEl.innerHTML = "";
+  }
 
-    if (!loading && !error && !hasPackages) {
-      emptyEl.hidden = false;
-    } else {
-      emptyEl.hidden = true;
-    }
+  function showEmpty() {
+    hideAllStates();
+    emptyEl.classList.remove("hidden");
+    anchorsEl.innerHTML = "";
+    listEl.innerHTML = "";
+  }
 
-    if (hasPackages) {
-      renderPackages(packages);
-    } else {
-      anchorsEl.innerHTML = "";
-      listEl.innerHTML = "";
-    }
+  function showSuccess(packages) {
+    hideAllStates();
+    renderPackages(packages);
+    anchorsEl.classList.remove("hidden");
+    listEl.classList.remove("hidden");
   }
 
   function highlightTarget(target) {
@@ -194,16 +200,21 @@
   });
 
   async function loadPackages() {
-    renderState({ loading: true });
+    showLoading();
     try {
       const res = await fetch(`${API_BASE}/api/lab-packages`, { method: "GET" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data || data.success !== true) {
         throw new Error(data?.error?.message || "Unable to load packages.");
       }
-      renderState({ packages: data.data || [] });
+      const packages = Array.isArray(data.data) ? data.data : [];
+      if (packages.length) {
+        showSuccess(packages);
+      } else {
+        showEmpty();
+      }
     } catch (err) {
-      renderState({ error: err?.message || "Unable to load packages." });
+      showError(err?.message || "Unable to load packages.");
     }
   }
 
