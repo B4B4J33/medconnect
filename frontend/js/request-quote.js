@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const API_BASE =
     (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
 
@@ -334,6 +334,38 @@
     });
   }
 
+  function prefillFromParams() {
+    const params = new URLSearchParams(window.location.search);
+    const pkg = (params.get("package") || "").trim();
+    const category = (params.get("category") || "").trim();
+
+    if (category) {
+      const checkboxes = Array.from(
+        form.querySelectorAll('input[name="service_categories"]')
+      );
+      const match = checkboxes.find(
+        (input) => String(input.value || "").trim().toLowerCase() === category.toLowerCase()
+      );
+
+      if (match) {
+        match.checked = true;
+      } else {
+        const other = checkboxes.find(
+          (input) => String(input.value || "").trim().toLowerCase() === "other"
+        );
+        if (other) other.checked = true;
+      }
+    }
+
+    if (pkg && el.message) {
+      const current = (el.message.value || "").trim();
+      const prefix = `Package: ${pkg}`;
+      if (!current.toLowerCase().startsWith("package:")) {
+        el.message.value = current ? `${prefix}\n${current}` : prefix;
+      }
+    }
+  }
+
   async function loadDoctors() {
     if (!el.doctor) return;
     try {
@@ -422,6 +454,7 @@
   }
 
   bindClearOnInput();
+  prefillFromParams();
   loadDoctors();
   form.addEventListener("submit", handleSubmit);
 })();
