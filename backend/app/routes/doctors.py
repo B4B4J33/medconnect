@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 
 from app.db import get_connection
 from app.routes.utils import success_response
+from app.email_utils import send_email
 
 doctors_bp = Blueprint("doctors", __name__)
 
@@ -355,6 +356,20 @@ def admin_create_doctor():
                 ),
             )
         conn.commit()
+
+    try:
+        email_body = "\n".join([
+            f"Hello Dr {full_name},",
+            "",
+            "Your MedConnect account has been created.",
+            f"Email/Username: {email}",
+            f"Temporary password: {temp_password}",
+            "",
+            "Please log in and change your password after your first login.",
+        ])
+        send_email(email, "Your MedConnect account", email_body)
+    except Exception:
+        pass
 
     return jsonify({
         "success": True,

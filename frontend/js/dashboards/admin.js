@@ -114,7 +114,10 @@
       <section class="dash-section" id="admin-doctors">
         <div class="dash-section__head">
           <h2>Doctors</h2>
-          <button class="btn primary" id="adminAddDoctorBtn">Add Doctor</button>
+          <div class="dash-inline">
+            <button class="btn ghost" id="adminViewCredentialsBtn" disabled>View last generated credentials</button>
+            <button class="btn primary" id="adminAddDoctorBtn">Add Doctor</button>
+          </div>
         </div>
         <div class="dash-loading" data-role="loading">Loading...</div>
         <div class="dash-error" data-role="error" hidden></div>
@@ -192,6 +195,7 @@
     const apptSection = sectionEls(document.getElementById("admin-appointments"));
 
     const addDoctorBtn = document.getElementById("adminAddDoctorBtn");
+    const viewCredsBtn = document.getElementById("adminViewCredentialsBtn");
     const apptStatusFilter = document.getElementById("adminApptStatus");
     const apptDoctorFilter = document.getElementById("adminApptDoctor");
     const apptFrom = document.getElementById("adminApptFrom");
@@ -203,6 +207,194 @@
       appointments: [],
       apptMap: new Map(),
     };
+
+    const CREDENTIALS_KEY = "mc_admin_last_doctor_credentials";
+    try {
+      sessionStorage.removeItem(CREDENTIALS_KEY);
+    } catch (e) {}
+
+    function readStoredCredentials() {
+      try {
+        const raw = sessionStorage.getItem(CREDENTIALS_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.email || !parsed.password) return null;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function storeCredentials(creds) {
+      if (!creds || !creds.email || !creds.password) return;
+      try {
+        sessionStorage.setItem(CREDENTIALS_KEY, JSON.stringify(creds));
+      } catch (e) {}
+      updateCredentialsButton();
+    }
+
+    function updateCredentialsButton() {
+      if (!viewCredsBtn) return;
+      const creds = readStoredCredentials();
+      viewCredsBtn.disabled = !creds;
+    }
+
+    function buildCredentialsText(creds) {
+      const lines = [
+        "MedConnect Doctor Credentials",
+        `Name: ${creds.name || "Doctor"}`,
+        `Email: ${creds.email}`,
+        `Temporary password: ${creds.password}`,
+        "",
+        "Please log in and change your password after your first login.",
+      ];
+      return lines.join("\n");
+    }
+
+    function preventEscapeClose(e) {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+
+    function lockModal() {
+      const modalRoot = el.modal?.root;
+      if (!modalRoot) return;
+      modalRoot.classList.add("is-locked");
+      const overlay = modalRoot.querySelector(".mc-modal__overlay");
+      const closeBtn = modalRoot.querySelector(".mc-modal__close");
+      if (overlay) overlay.removeAttribute("data-close");
+      if (closeBtn) closeBtn.removeAttribute("data-close");
+      document.addEventListener("keydown", preventEscapeClose, true);
+    }
+
+    function unlockModal() {
+      const modalRoot = el.modal?.root;
+      if (!modalRoot) return;
+      modalRoot.classList.remove("is-locked");
+      const overlay = modalRoot.querySelector(".mc-modal__overlay");
+      const closeBtn = modalRoot.querySelector(".mc-modal__close");
+      if (overlay) overlay.setAttribute("data-close", "true");
+      if (closeBtn) closeBtn.setAttribute("data-close", "true");
+      document.removeEventListener("keydown", preventEscapeClose, true);
+    }
+
+    async function copyText(value) {
+      if (!value) return false;
+      if (navigator?.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(value);
+          return true;
+        } catch (e) {}
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return ok;
+    }
+
+    function openCredentialsModal(creds) {
+      if (!creds || !creds.email || !creds.password) return;
+      const body = `
+        <div class="dash-credentials">
+          <div class="dash-cred__row">
+            <span class="dash-cred__label">Doctor email</span>
+            <span class="dash-cred__value" id="credEmail">${escapeHtml(creds.email)}</span>
+          </div>
+          <div class="dash-cred__row">
+            <span class="dash-cred__label">Temporary password</span>
+            <div class="dash-cred__password">
+              <span class="dash-cred__value" id="credPassword">••••••••</span>
+              <button type="button" class="btn ghost" data-action="toggle-password">Show</button>
+            </div>
+          </div>
+          <div class="dash-cred__actions">
+            <button type="button" class="btn ghost" data-action="copy-password">Copy password</button>
+            <button type="button" class="btn ghost" data-action="copy-credentials">Copy full credentials</button>
+            <button type="button" class="btn ghost" data-action="download-credentials">Download credentials (.txt)</button>
+          </div>
+          <label class="dash-cred__confirm">
+            <input type="checkbox" id="credSaved" class="dash-check">
+            <span>I have saved these credentials</span>
+          </label>
+          <p class="dash-cred__hint">This modal will stay open until you confirm the credentials are saved.</p>
+        </div>
+      `;
+
+      const footer = `
+        <button type="button" class="btn primary" data-action="close-credentials" disabled>Close</button>
+      `;
+
+      el.openModal({ title: "Doctor Credentials", body, footer });
+      lockModal();
+
+      const modalRoot = el.modal?.root;
+      if (!modalRoot) return;
+
+      const passwordEl = modalRoot.querySelector("#credPassword");
+      const toggleBtn = modalRoot.querySelector('[data-action="toggle-password"]');
+      const copyPasswordBtn = modalRoot.querySelector('[data-action="copy-password"]');
+      const copyCredentialsBtn = modalRoot.querySelector('[data-action="copy-credentials"]');
+      const downloadBtn = modalRoot.querySelector('[data-action="download-credentials"]');
+      const confirmBox = modalRoot.querySelector("#credSaved");
+      const closeBtn = modalRoot.querySelector('[data-action="close-credentials"]');
+
+      let revealed = false;
+      if (toggleBtn && passwordEl) {
+        toggleBtn.addEventListener("click", () => {
+          revealed = !revealed;
+          passwordEl.textContent = revealed ? creds.password : "••••••••";
+          toggleBtn.textContent = revealed ? "Hide" : "Show";
+        });
+      }
+
+      if (copyPasswordBtn) {
+        copyPasswordBtn.addEventListener("click", () => copyText(creds.password));
+      }
+
+      if (copyCredentialsBtn) {
+        copyCredentialsBtn.addEventListener("click", () => copyText(buildCredentialsText(creds)));
+      }
+
+      if (downloadBtn) {
+        downloadBtn.addEventListener("click", () => {
+          const blob = new Blob([buildCredentialsText(creds)], { type: "text/plain" });
+          const url = URL.createObjectURL(blob);
+          const slug = String(creds.email || "doctor")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `medconnect-credentials-${slug || "doctor"}.txt`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        });
+      }
+
+      if (confirmBox && closeBtn) {
+        closeBtn.disabled = !confirmBox.checked;
+        confirmBox.addEventListener("change", () => {
+          closeBtn.disabled = !confirmBox.checked;
+        });
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          if (confirmBox && !confirmBox.checked) return;
+          unlockModal();
+          el.closeModal();
+        });
+      }
+    }
 
     function formatAvailability(doc) {
       const days = Array.isArray(doc.availability_days) ? doc.availability_days : [];
@@ -377,52 +569,50 @@
       const dayChecks = DAYS.map((day) => {
         const checked = selectedDays.has(day) ? "checked" : "";
         return `
-          <label>
-            <input type="checkbox" name="availability_days" value="${escapeHtml(day)}" ${checked}>
-            <span>${escapeHtml(DAY_LABELS[day])}</span>
+          <label class="dash-fieldset__row">
+            <span class="dash-fieldset__label">${escapeHtml(DAY_LABELS[day])}</span>
+            <input class="dash-check" type="checkbox" name="availability_days" value="${escapeHtml(day)}" ${checked}>
           </label>
         `;
       }).join("");
 
       const body = `
         <form class="dash-form" id="doctorForm">
-          <div class="dash-form__grid">
-            <div class="dash-form__row">
-              <label for="doctorFullName">Full name</label>
-              <input type="text" id="doctorFullName" value="${escapeHtml(doctor?.full_name || "")}" />
-            </div>
-            <div class="dash-form__row">
-              <label for="doctorEmail">Email</label>
-              <input type="email" id="doctorEmail" value="${escapeHtml(doctor?.email || "")}" />
-            </div>
-            <div class="dash-form__row">
-              <label for="doctorSpecialty">Specialty</label>
-              <input type="text" id="doctorSpecialty" value="${escapeHtml(doctor?.specialty || "")}" />
-            </div>
-            <div class="dash-form__row">
-              <label for="doctorPhone">Phone</label>
-              <input type="text" id="doctorPhone" value="${escapeHtml(doctor?.phone || "")}" />
-            </div>
-            <div class="dash-form__row">
-              <label for="doctorAvailStart">Availability start</label>
-              <input type="time" id="doctorAvailStart" step="3600" value="${escapeHtml(doctor?.availability_start || "")}" />
-            </div>
-            <div class="dash-form__row">
-              <label for="doctorAvailEnd">Availability end</label>
-              <input type="time" id="doctorAvailEnd" step="3600" value="${escapeHtml(doctor?.availability_end || "")}" />
-            </div>
+          <div class="dash-form__row">
+            <label for="doctorFullName">Full name</label>
+            <input type="text" id="doctorFullName" value="${escapeHtml(doctor?.full_name || "")}" />
           </div>
           <div class="dash-form__row">
-            <label>Availability days</label>
-            <div class="dash-checkbox-grid">
+            <label for="doctorEmail">Email</label>
+            <input type="email" id="doctorEmail" value="${escapeHtml(doctor?.email || "")}" />
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorSpecialty">Specialty</label>
+            <input type="text" id="doctorSpecialty" value="${escapeHtml(doctor?.specialty || "")}" />
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorPhone">Phone</label>
+            <input type="text" id="doctorPhone" value="${escapeHtml(doctor?.phone || "")}" />
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorAvailStart">Availability start</label>
+            <input type="time" id="doctorAvailStart" step="3600" value="${escapeHtml(doctor?.availability_start || "")}" />
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorAvailEnd">Availability end</label>
+            <input type="time" id="doctorAvailEnd" step="3600" value="${escapeHtml(doctor?.availability_end || "")}" />
+          </div>
+          <fieldset class="dash-fieldset">
+            <legend>Availability days</legend>
+            <div class="dash-fieldset__rows">
               ${dayChecks}
             </div>
-          </div>
+          </fieldset>
           <div class="dash-form__row">
-            <label>
-              <input type="checkbox" id="doctorActive" ${doctor?.is_active !== false ? "checked" : ""}>
-              Active
-            </label>
+            <div class="dash-fieldset__row dash-fieldset__row--solo">
+              <label class="dash-fieldset__label" for="doctorActive">Active</label>
+              <input class="dash-check" type="checkbox" id="doctorActive" ${doctor?.is_active !== false ? "checked" : ""}>
+            </div>
           </div>
           <div class="dash-error" id="doctorFormError" hidden></div>
         </form>
@@ -536,14 +726,15 @@
 
         const tempPassword = data?.data?.temp_password;
         if (tempPassword && !isEdit) {
-          const body = `
-            <div class="dash-form">
-              <p>The doctor account has been created.</p>
-              <p><strong>Temporary password:</strong> ${escapeHtml(tempPassword)}</p>
-              <p>Share this password with the doctor. They can log in and change it later.</p>
-            </div>
-          `;
-          el.openModal({ title: "Doctor login created", body });
+          const doctorData = data?.data?.doctor || {};
+          const credentials = {
+            name: doctorData.full_name || fullName,
+            email: doctorData.email || email,
+            password: tempPassword,
+            created_at: new Date().toISOString(),
+          };
+          storeCredentials(credentials);
+          openCredentialsModal(credentials);
         }
       });
     }
@@ -616,6 +807,13 @@
       addDoctorBtn.addEventListener("click", () => openDoctorModal(null));
     }
 
+    if (viewCredsBtn) {
+      viewCredsBtn.addEventListener("click", () => {
+        const creds = readStoredCredentials();
+        if (creds) openCredentialsModal(creds);
+      });
+    }
+
     if (apptStatusFilter) apptStatusFilter.addEventListener("change", applyFilters);
     if (apptDoctorFilter) apptDoctorFilter.addEventListener("change", applyFilters);
     if (apptFrom) apptFrom.addEventListener("change", applyFilters);
@@ -639,6 +837,7 @@
       });
     }
 
+    updateCredentialsButton();
     loadDoctors();
     loadAppointments();
   }
