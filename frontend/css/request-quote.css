@@ -1,57 +1,62 @@
-﻿/* Request Quote page styles */
-
-:root {
-  color-scheme: light;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  color: #111111;
-  background: #f5f7fb;
-}
+/* Request Quote page styles */
 
 .rq-page {
-  padding: 32px 16px 64px;
+  padding: var(--spacing-4) var(--spacing-3);
+  background: #f9f9f9;
+}
+
+.rq-header {
+  text-align: center;
+  margin-bottom: var(--spacing-3);
+}
+
+.rq-header h1 {
+  font-size: 1.8rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-1);
+}
+
+.rq-intro {
+  color: #444;
+  margin: 0;
 }
 
 .rq-container {
   max-width: 980px;
   width: 100%;
-  padding: 24px;
+  padding: var(--spacing-3);
   margin: 0 auto;
   background: #ffffff;
+  border-radius: var(--radius);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .rq-banner {
-  background: #ecfdf3;
+  background: rgba(16, 185, 129, 0.12);
   color: #0f7a3e;
-  border: 1px solid #d1fae5;
+  border: 1px solid rgba(16, 185, 129, 0.35);
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   margin-bottom: 16px;
-  font-size: 13px;
+  font-size: 0.9rem;
 }
 
 .rq-banner--error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border-color: #fecaca;
+  background: rgba(220, 38, 38, 0.12);
+  color: #9b1c1c;
+  border-color: rgba(220, 38, 38, 0.35);
 }
 
 .rq-section {
-  margin-top: 22px;
+  margin-top: var(--spacing-3);
 }
 
 .rq-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px;
+  gap: var(--spacing-3);
 }
 
 .rq-name-grid {
@@ -62,9 +67,9 @@ body {
 
 .rq-label {
   display: block;
-  font-size: 12px;
-  color: #7aa7ff;
-  font-weight: 400;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
   margin-bottom: 6px;
 }
 
@@ -73,9 +78,9 @@ body {
 .rq-field textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius);
+  font-size: 1rem;
   color: #111111;
   background: #ffffff;
 }
@@ -94,8 +99,8 @@ body {
 .rq-field select:focus,
 .rq-field textarea:focus {
   outline: none;
-  border-color: #7aa7ff;
-  box-shadow: 0 0 0 3px rgba(122, 167, 255, 0.25);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 33, 245, 0.18);
 }
 
 .rq-checkbox-list {
@@ -108,14 +113,15 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #111111;
+  color: #333;
+  font-size: 0.95rem;
 }
 
 .rq-checkbox-list input[type="checkbox"] {
   width: 16px;
   height: 16px;
   border-radius: 2px;
-  accent-color: #7aa7ff;
+  accent-color: var(--color-accent);
 }
 
 .rq-upload-block {
@@ -127,34 +133,45 @@ body {
 }
 
 .rq-drop {
-  border: 1.5px dashed #e5e7eb;
-  border-radius: 14px;
+  border: 1.5px dashed rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius);
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: flex-start;
-  background: #ffffff;
+  background: #fafafa;
 }
 
 .rq-drop.is-dragover {
-  border-color: #7aa7ff;
-  background: #f5f8ff;
+  border-color: var(--color-accent);
+  background: #f0f4ff;
 }
 
 .rq-upload-btn {
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #111111;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
   padding: 8px 14px;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-bold);
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+.rq-upload-btn:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.rq-upload-btn:active {
+  transform: scale(0.97);
 }
 
 .rq-helper {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 0.85rem;
+  color: #666;
   margin-top: 8px;
 }
 
@@ -169,24 +186,24 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: 0.9rem;
   background: #ffffff;
 }
 
 .rq-file button {
   border: none;
   background: transparent;
-  color: #e11d48;
+  color: #b91c1c;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.85rem;
 }
 
 .rq-error {
-  color: #e11d48;
-  font-size: 12px;
+  color: #b91c1c;
+  font-size: 0.85rem;
   margin-top: 6px;
 }
 
@@ -203,7 +220,7 @@ body {
 .rq-captcha-box {
   width: 304px;
   height: 78px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-muted);
   background: #f9fafb;
   display: flex;
   align-items: center;
@@ -219,16 +236,34 @@ body {
 }
 
 .rq-submit {
-  width: 260px;
+  min-width: 220px;
   height: 54px;
-  border-radius: 999px;
-  background: #ff4fa3;
+  border-radius: var(--radius);
+  background: var(--color-accent);
   color: #ffffff;
   border: none;
   cursor: pointer;
   display: block;
   margin: 26px auto 0;
-  font-size: 16px;
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  transition: background 0.2s, transform 0.1s;
+}
+
+.rq-submit:hover {
+  background: #0018b8;
+}
+
+.rq-submit:active {
+  background: #0012a3;
+  transform: scale(0.98);
+}
+
+.rq-submit:disabled {
+  background: #c7c7c7;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (max-width: 768px) {
