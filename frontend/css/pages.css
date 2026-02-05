@@ -153,10 +153,10 @@
 /* Desktop adjustments */
 @media (min-width: 769px) {
   .qa-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
   .qa-card.full {
-    grid-column: span 4;
+    grid-column: span 5;
   }
 }
 
