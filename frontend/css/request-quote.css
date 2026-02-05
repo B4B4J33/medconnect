@@ -214,8 +214,21 @@
 
 .rq-consent-row {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+}
+
+.rq-consent-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.rq-consent-row label {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
 }
 
 .rq-captcha {
