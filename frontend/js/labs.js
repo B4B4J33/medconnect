@@ -14,32 +14,6 @@
     return;
   }
 
-  function setLoading() {
-    statusEl.textContent = "Loading packages...";
-    statusEl.hidden = false;
-    errorEl.hidden = true;
-    emptyEl.hidden = true;
-  }
-
-  function setError(message) {
-    statusEl.hidden = true;
-    errorEl.hidden = false;
-    emptyEl.hidden = true;
-    errorMessageEl.textContent = message || "Unable to load packages.";
-  }
-
-  function setEmpty() {
-    statusEl.hidden = true;
-    errorEl.hidden = true;
-    emptyEl.hidden = false;
-  }
-
-  function clearStatus() {
-    statusEl.hidden = true;
-    errorEl.hidden = true;
-    emptyEl.hidden = true;
-  }
-
   function formatPrice(value, currency) {
     const amount = Number(value || 0);
     const formatted = Number.isFinite(amount)
@@ -158,17 +132,42 @@
     anchorsEl.innerHTML = "";
     listEl.innerHTML = "";
 
-    if (!packages.length) {
-      setEmpty();
-      return;
-    }
-
     packages.forEach((pkg) => {
       anchorsEl.appendChild(createAnchor(pkg));
       listEl.appendChild(createCard(pkg));
     });
+  }
 
-    clearStatus();
+  function renderState({ loading = false, error = "", packages = [] }) {
+    const hasPackages = Array.isArray(packages) && packages.length > 0;
+
+    if (loading) {
+      statusEl.textContent = "Loading packages...";
+      statusEl.hidden = false;
+    } else {
+      statusEl.hidden = true;
+    }
+
+    if (error && !loading && !hasPackages) {
+      errorEl.hidden = false;
+      errorMessageEl.textContent = error;
+    } else {
+      errorEl.hidden = true;
+      errorMessageEl.textContent = "";
+    }
+
+    if (!loading && !error && !hasPackages) {
+      emptyEl.hidden = false;
+    } else {
+      emptyEl.hidden = true;
+    }
+
+    if (hasPackages) {
+      renderPackages(packages);
+    } else {
+      anchorsEl.innerHTML = "";
+      listEl.innerHTML = "";
+    }
   }
 
   function highlightTarget(target) {
@@ -194,16 +193,16 @@
   });
 
   async function loadPackages() {
-    setLoading();
+    renderState({ loading: true });
     try {
       const res = await fetch(`${API_BASE}/api/lab-packages`, { method: "GET" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data || data.success !== true) {
         throw new Error(data?.error?.message || "Unable to load packages.");
       }
-      renderPackages(data.data || []);
+      renderState({ packages: data.data || [] });
     } catch (err) {
-      setError(err?.message || "Unable to load packages.");
+      renderState({ error: err?.message || "Unable to load packages." });
     }
   }
 
