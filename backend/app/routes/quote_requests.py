@@ -8,6 +8,7 @@ from flask import Blueprint, request, send_file, jsonify, session
 
 from app.db import get_connection
 from app.routes.utils import success_response, error_response
+from app.email_utils import send_email
 
 
 quote_requests_bp = Blueprint("quote_requests", __name__)
@@ -188,6 +189,7 @@ def create_quote_request():
         valid_documents.append(doc)
 
     doctor_id = None
+    preferred_doctor = None
     if doctor_id_raw:
         try:
             doctor_id = int(doctor_id_raw)
@@ -206,8 +208,12 @@ def create_quote_request():
     if doctor_id is not None:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT id FROM doctors WHERE id = %s AND is_active = TRUE", (doctor_id,))
-                if not cur.fetchone():
+                cur.execute(
+                    "SELECT id, full_name FROM doctors WHERE id = %s AND is_active = TRUE",
+                    (doctor_id,),
+                )
+                doc_row = cur.fetchone()
+                if not doc_row:
                     return jsonify({
                         "success": False,
                         "error": {
@@ -215,6 +221,7 @@ def create_quote_request():
                             "field_errors": {"doctor_id": "Selected doctor is not available"},
                         },
                     }), 400
+                preferred_doctor = doc_row.get("full_name")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -225,7 +232,7 @@ def create_quote_request():
                      doctor_id, message, status)
                 VALUES
                     (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id;
+                RETURNING id, created_at;
                 """,
                 (
                     first_name,
@@ -242,6 +249,7 @@ def create_quote_request():
             )
             row = cur.fetchone()
             quote_request_id = row.get("id")
+            created_at = row.get("created_at")
         conn.commit()
 
     folder = QUOTE_UPLOADS_ROOT / str(quote_request_id)
@@ -289,6 +297,29 @@ def create_quote_request():
                     ),
                 )
             conn.commit()
+
+    uploaded_files_count = len(valid_documents) + (1 if id_document else 0)
+    submitted_at = created_at.isoformat() if isinstance(created_at, datetime.datetime) else ""
+    categories_text = ", ".join(service_categories)
+
+    body = "\n".join([
+        f"Full name: {first_name} {last_name}".strip(),
+        f"Email: {email}",
+        f"Phone: {phone}",
+        f"Selected service categories: {categories_text}",
+        f"Preferred doctor: {preferred_doctor or 'Not specified'}",
+        "Message:",
+        message,
+        f"Uploaded files count: {uploaded_files_count}",
+        f"Quote request ID: {quote_request_id}",
+        f"Submitted: {submitted_at}",
+    ])
+
+    send_email(
+        "l.gooroovadoo@gmail.com",
+        "New Quote Request Received",
+        body,
+    )
 
     return success_response({"id": quote_request_id}, 201)
 
