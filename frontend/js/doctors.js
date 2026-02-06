@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let doctors = [];
   const DEFAULT_AVATAR = "assets/img/default_avatar.jpg";
-  const API_BASE = (window.API_BASE_URL || "").replace(/\/+$/, "");
+  const api = window.MC_API;
+  const t = window.MC_I18N?.t || ((_, fallback) => fallback);
+  const API_BASE = api?.API_BASE || "";
 
   function normalize(str) {
     return String(str || "").trim().toLowerCase();
@@ -68,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function render(items) {
     if (!items.length) {
-      listEl.innerHTML = "<p>No doctors found.</p>";
+      listEl.innerHTML = `<p>${t("doctors_empty", "No doctors found.")}</p>`;
       return;
     }
 
@@ -98,11 +100,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function init() {
-    try {
-      const res = await fetch(`${window.API_BASE_URL}/api/doctors`);
-      if (!res.ok) throw new Error("Doctors API failed");
+    if (!api?.hasBase?.()) {
+      listEl.innerHTML = `<p>${t("api_missing", "Service is temporarily unavailable.")}</p>`;
+      return;
+    }
 
-      const payload = await res.json().catch(() => null);
+    try {
+      const { ok, data } = await api.getJson("/api/doctors");
+      if (!ok) throw new Error("Doctors API failed");
+
+      const payload = data;
       doctors = Array.isArray(payload?.data?.items)
         ? payload.data.items
         : Array.isArray(payload)
@@ -114,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
       refresh();
     } catch (err) {
       console.error(err);
-      listEl.innerHTML = "<p>Unable to load doctors.</p>";
+      listEl.innerHTML = `<p>${t("doctors_load_error", "Unable to load doctors.")}</p>`;
     }
   }
 

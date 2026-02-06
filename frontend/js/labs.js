@@ -1,6 +1,6 @@
 (() => {
-  const API_BASE =
-    (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
+  const api = window.MC_API;
+  const t = window.MC_I18N?.t || ((_, fallback) => fallback);
 
   const anchorsEl = document.getElementById("labsAnchors");
   const listEl = document.getElementById("labsList");
@@ -9,7 +9,7 @@
   const errorMessageEl = document.getElementById("labsErrorMessage");
   const retryBtn = document.getElementById("labsRetry");
   const emptyEl = document.getElementById("labsEmpty");
-  const defaultErrorMessage = "Unable to load packages.";
+  const defaultErrorMessage = t("labs_error", "Unable to load packages.");
 
   if (!anchorsEl || !listEl || !statusEl || !errorEl || !errorMessageEl || !retryBtn || !emptyEl) {
     return;
@@ -63,7 +63,7 @@
     const body = document.createElement("div");
     const label = document.createElement("div");
     label.className = "lab-card__label";
-    label.textContent = "Includes";
+    label.textContent = t("labs_includes", "Includes");
 
     const list = document.createElement("ul");
     list.className = "lab-card__list";
@@ -88,7 +88,7 @@
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "lab-card__toggle";
-      toggle.textContent = "Show all";
+      toggle.textContent = t("labs_show_all", "Show all");
       toggle.addEventListener("click", () => {
         const hiddenItems = list.querySelectorAll("li.is-hidden");
         const isExpanded = toggle.getAttribute("data-expanded") === "true";
@@ -96,7 +96,9 @@
           li.classList.toggle("is-hidden", isExpanded);
         });
         toggle.setAttribute("data-expanded", isExpanded ? "false" : "true");
-        toggle.textContent = isExpanded ? "Show all" : "Show less";
+        toggle.textContent = isExpanded
+          ? t("labs_show_all", "Show all")
+          : t("labs_show_less", "Show less");
       });
       body.appendChild(toggle);
     }
@@ -106,7 +108,9 @@
 
     const note = document.createElement("div");
     note.className = "lab-card__note";
-    note.textContent = pkg.preparation_note || "Preparation: not specified";
+    note.textContent =
+      pkg.preparation_note ||
+      t("labs_preparation_default", "Preparation: not specified");
 
     const cta = document.createElement("a");
     cta.className = "lab-card__cta";
@@ -116,7 +120,7 @@
       params.set("category", pkg.category);
     }
     cta.href = `request-quote.html?${params.toString()}`;
-    cta.textContent = "Request quote";
+    cta.textContent = t("labs_request_quote", "Request quote");
 
     footer.appendChild(note);
     footer.appendChild(cta);
@@ -149,7 +153,7 @@
 
   function showLoading() {
     hideAllStates();
-    statusEl.textContent = "Loading packages...";
+    statusEl.textContent = t("labs_loading", "Loading packages...");
     statusEl.classList.remove("hidden");
     anchorsEl.innerHTML = "";
     listEl.innerHTML = "";
@@ -201,11 +205,14 @@
 
   async function loadPackages() {
     showLoading();
+    if (!api?.hasBase?.()) {
+      showError(t("api_missing", "Service is temporarily unavailable."));
+      return;
+    }
     try {
-      const res = await fetch(`${API_BASE}/api/lab-packages`, { method: "GET" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data || data.success !== true) {
-        throw new Error(data?.error?.message || "Unable to load packages.");
+      const { ok, data } = await api.getJson("/api/lab-packages");
+      if (!ok || !data || data.success !== true) {
+        throw new Error(data?.error?.message || defaultErrorMessage);
       }
       const packages = Array.isArray(data.data) ? data.data : [];
       if (packages.length) {
@@ -214,7 +221,7 @@
         showEmpty();
       }
     } catch (err) {
-      showError(err?.message || "Unable to load packages.");
+      showError(err?.message || defaultErrorMessage);
     }
   }
 

@@ -1,6 +1,7 @@
 (() => {
-  const API_BASE =
-    (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
+  const api = window.MC_API;
+  const ui = window.MC_UI;
+  const API_BASE = api?.API_BASE || "";
 
   const el = {
     dashName: document.getElementById("dashName"),
@@ -71,17 +72,22 @@
       .replaceAll("'", "&#039;");
   }
 
+  function notify(message, type = "error") {
+    if (!message) return;
+    if (ui?.toast) {
+      ui.toast(message, type);
+    } else {
+      alert(message);
+    }
+  }
+
   async function apiFetch(path, opts = {}) {
-    const url = `${API_BASE}${path}`;
-    return fetch(url, {
-      ...opts,
-      headers: {
-        "Content-Type": "application/json",
-        ...(opts.headers || {}),
-      },
-      cache: "no-store",
-      credentials: "include",
-    });
+    if (!api?.hasBase?.()) {
+      const err = new Error("API base URL is not configured.");
+      err.code = "API_BASE_MISSING";
+      throw err;
+    }
+    return api.apiFetch(path, opts);
   }
 
   async function getMe() {
@@ -147,9 +153,9 @@
   }
 
   function introForRole(role) {
-    if (role === "doctor") return "Your schedule and patient actions are ready.";
-    if (role === "admin") return "System oversight and management tools are available.";
-    return "Your upcoming appointments and reports are ready.";
+    if (role === "doctor") return t("dashboard_intro_doctor", "Your schedule and patient actions are ready.");
+    if (role === "admin") return t("dashboard_intro_admin", "System oversight and management tools are available.");
+    return t("dashboard_intro_patient", "Your upcoming appointments and reports are ready.");
   }
 
   function openModal({ title, body, footer }) {
@@ -192,15 +198,15 @@
     const items = [];
 
     if (role === "patient") {
-      items.push({ label: "Appointments", target: "patient-appointments" });
-      items.push({ label: "Lab Reports", target: "patient-reports" });
+      items.push({ label: t("dashboard_nav_appointments", "Appointments"), target: "patient-appointments" });
+      items.push({ label: t("dashboard_nav_reports", "Lab Reports"), target: "patient-reports" });
     } else if (role === "doctor") {
-      items.push({ label: "Summary", target: "doctor-summary" });
-      items.push({ label: "Appointments", target: "doctor-appointments" });
+      items.push({ label: t("dashboard_nav_summary", "Summary"), target: "doctor-summary" });
+      items.push({ label: t("dashboard_nav_appointments", "Appointments"), target: "doctor-appointments" });
     } else if (role === "admin") {
-      items.push({ label: "Doctors", target: "admin-doctors" });
-      items.push({ label: "Quote Requests", target: "admin-quotes" });
-      items.push({ label: "Appointments", target: "admin-appointments" });
+      items.push({ label: t("dashboard_nav_doctors", "Doctors"), target: "admin-doctors" });
+      items.push({ label: t("dashboard_nav_quotes", "Quote Requests"), target: "admin-quotes" });
+      items.push({ label: t("dashboard_nav_appointments", "Appointments"), target: "admin-appointments" });
     }
 
     el.nav.innerHTML = items
@@ -283,11 +289,11 @@
     el.moduleRoot.innerHTML = `
       <section class="dash-section" id="patient-appointments">
         <div class="dash-section__head">
-          <h2>Appointments</h2>
+          <h2>${t("dashboard_appointments", "Appointments")}</h2>
         </div>
-        <div class="dash-loading" data-role="loading">Loading...</div>
+        <div class="dash-loading" data-role="loading">${t("loading", "Loading...")}</div>
         <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>No appointments to display.</div>
+        <div class="dash-empty" data-role="empty" hidden>${t("dashboard_no_appointments", "No appointments to display.")}</div>
         <div class="table-wrap" data-role="table" hidden>
           <table class="mc-table">
             <thead>
@@ -307,11 +313,11 @@
 
       <section class="dash-section" id="patient-reports">
         <div class="dash-section__head">
-          <h2>Lab Reports</h2>
+          <h2>${t("dashboard_reports", "Lab Reports")}</h2>
         </div>
-        <div class="dash-loading" data-role="loading">Loading...</div>
+        <div class="dash-loading" data-role="loading">${t("loading", "Loading...")}</div>
         <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>No lab reports to display.</div>
+        <div class="dash-empty" data-role="empty" hidden>${t("dashboard_no_reports", "No lab reports to display.")}</div>
         <div class="table-wrap" data-role="table" hidden>
           <table class="mc-table">
             <thead>
@@ -341,11 +347,11 @@
       });
 
       if (!res.ok) {
-        alert(t("cancel_failed", "Unable to cancel appointment."));
+        notify(t("cancel_failed", "Unable to cancel appointment."));
         return;
       }
 
-      alert(t("cancel_success", "Appointment cancelled."));
+      notify(t("cancel_success", "Appointment cancelled."), "success");
       await loadAppointments();
     }
 
@@ -356,7 +362,7 @@
 
     function renderAppointments(items, role) {
       if (!Array.isArray(items) || items.length === 0) {
-        setSectionEmpty(apptSection, "No appointments to display.");
+        setSectionEmpty(apptSection, t("dashboard_no_appointments", "No appointments to display."));
         return;
       }
 
@@ -429,7 +435,7 @@
 
     function renderReports(items) {
       if (!Array.isArray(items) || items.length === 0) {
-        setSectionEmpty(repSection, "No lab reports to display.");
+        setSectionEmpty(repSection, t("dashboard_no_reports", "No lab reports to display."));
         return;
       }
 
@@ -489,7 +495,7 @@
       }
 
       if (!payload) {
-        setSectionError(apptSection, "Unable to load appointments.");
+        setSectionError(apptSection, t("dashboard_load_appointments_error", "Unable to load appointments."));
         return;
       }
 
@@ -524,7 +530,7 @@
       }
 
       if (!payload) {
-        setSectionError(repSection, "Unable to load lab reports.");
+        setSectionError(repSection, t("dashboard_load_reports_error", "Unable to load lab reports."));
         return;
       }
 
@@ -533,10 +539,10 @@
     }
 
     el.moduleRoot.addEventListener("click", (e) => {
-      const t = e.target;
-      if (!t) return;
+      const target = e.target;
+      if (!target) return;
 
-      const viewBtn = t.closest && t.closest("[data-action='view']");
+      const viewBtn = target.closest && target.closest("[data-action='view']");
       if (viewBtn) {
         const raw = viewBtn.getAttribute("data-appt");
         if (!raw) return;
@@ -554,12 +560,12 @@
             ["Appointment ID", appt.id ?? ""],
           ].filter(([, v]) => String(v || "").trim());
 
-          openModal({ title: "Appointment details", body: buildKvRows(rows) });
+          openModal({ title: t("dashboard_appt_details", "Appointment details"), body: buildKvRows(rows) });
         } catch (err) {}
         return;
       }
 
-      const cancelBtn = t.closest && t.closest("[data-action='cancel']");
+      const cancelBtn = target.closest && target.closest("[data-action='cancel']");
       if (cancelBtn) {
         const id = cancelBtn.getAttribute("data-appt-id");
         if (id) cancelAppointment(id);
@@ -575,7 +581,19 @@
     bindModal();
     await loadTranslations();
 
-    if (el.dashIntro) el.dashIntro.textContent = "Loading your dashboard...";
+    if (!api?.hasBase?.()) {
+      hide(el.globalLoading);
+      if (el.globalError) {
+        el.globalError.textContent = t(
+          "api_missing",
+          "Service is temporarily unavailable."
+        );
+        show(el.globalError);
+      }
+      return;
+    }
+
+    if (el.dashIntro) el.dashIntro.textContent = t("dashboard_intro", "Loading your dashboard...");
     show(el.globalLoading);
     hide(el.globalError);
     hide(el.globalEmpty);
@@ -590,7 +608,7 @@
     if (!me.ok || !me.data || me.data.success !== true || !me.data.data?.user) {
       hide(el.globalLoading);
       if (el.globalError) {
-        el.globalError.textContent = "We could not load your dashboard. Please log in again.";
+        el.globalError.textContent = t("dashboard_load_error", "We could not load your dashboard. Please log in again.");
         show(el.globalError);
       }
       setTimeout(() => {

@@ -1,5 +1,7 @@
 (function () {
-  const API = (window.API_BASE_URL || "").replace(/\/$/, "");
+  const api = window.MC_API;
+  const ui = window.MC_UI;
+  const t = window.MC_I18N?.t || ((_, fallback) => fallback);
 
   function $(id) {
     return document.getElementById(id);
@@ -26,35 +28,30 @@
   }
 
   async function getMe() {
-    if (!API) return null;
-
-    const res = await fetch(`${API}/api/me`, {
-      method: "GET",
-      cache: "no-store",
-      credentials: "include",
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json().catch(() => null);
+    if (!api?.hasBase?.()) return null;
+    const { ok, data } = await api.getJson("/api/me");
+    if (!ok) return null;
     if (!data || data.success !== true || !data.data?.user) return null;
     return data.data.user;
   }
 
   async function postJSON(path, payload) {
-    const res = await fetch(`${API}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    return { ok: res.ok, status: res.status, data };
+    if (!api?.hasBase?.()) {
+      return {
+        ok: false,
+        status: 0,
+        data: { error: { message: t("api_missing", "Service is temporarily unavailable.") } },
+      };
+    }
+    return api.postJson(path, payload);
   }
 
   function showError(msg) {
-    alert(msg);
+    if (ui?.toast) {
+      ui.toast(msg, "error");
+    } else {
+      alert(msg);
+    }
   }
 
   function openForgotModal() {
@@ -97,7 +94,7 @@
         const { ok, data } = await postJSON("/api/auth/login", { email, password });
 
         if (!ok || !data.success) {
-          showError(data.error?.message || data.error || "Login failed");
+          showError(data.error?.message || data.error || t("portal_login_failed", "Login failed"));
           return;
         }
 
@@ -122,7 +119,7 @@
         });
 
         if (!ok || !data.success) {
-          showError(data.error?.message || data.error || "Registration failed");
+          showError(data.error?.message || data.error || t("portal_register_failed", "Registration failed"));
           return;
         }
 
@@ -146,14 +143,14 @@
         if (errorBox) errorBox.hidden = true;
         if (!email) {
           if (errorBox) {
-            errorBox.textContent = "Email is required.";
+            errorBox.textContent = t("portal_forgot_email_required", "Email is required.");
             errorBox.hidden = false;
           }
           return;
         }
 
         forgotSubmit.disabled = true;
-        forgotSubmit.textContent = "Sending...";
+        forgotSubmit.textContent = t("portal_forgot_sending", "Sending...");
 
         const { ok, data } = await postJSON("/api/auth/forgot-password", {
           email,
@@ -161,10 +158,10 @@
         });
 
         forgotSubmit.disabled = false;
-        forgotSubmit.textContent = "Submit";
+        forgotSubmit.textContent = t("portal_forgot_submit", "Submit");
 
         if (!ok || !data.success) {
-          const msg = data?.error?.message || "Unable to submit request.";
+          const msg = data?.error?.message || t("portal_forgot_error", "Unable to submit request.");
           if (errorBox) {
             errorBox.textContent = msg;
             errorBox.hidden = false;
@@ -173,7 +170,11 @@
         }
 
         closeForgotModal();
-        alert("Your request has been received. We will contact you soon.");
+        if (ui?.toast) {
+          ui.toast(t("portal_forgot_success", "Your request has been received. We will contact you soon."), "success");
+        } else {
+          alert(t("portal_forgot_success", "Your request has been received. We will contact you soon."));
+        }
       });
     }
 

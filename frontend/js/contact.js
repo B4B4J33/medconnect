@@ -1,6 +1,6 @@
 (() => {
-  const API_BASE =
-    (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
+  const api = window.MC_API;
+  const t = window.MC_I18N?.t || ((_, fallback) => fallback);
 
   const form = document.getElementById("contactForm");
   if (!form) return;
@@ -79,46 +79,46 @@
     const consent = !!el.consent?.checked;
 
     if (!type) {
-      setError("type", "Type is required.");
+      setError("type", t("contact_type_required", "Type is required."));
       valid = false;
     } else if (!ALLOWED_TYPES.has(type)) {
-      setError("type", "Select a valid enquiry type.");
+      setError("type", t("contact_type_invalid", "Select a valid enquiry type."));
       valid = false;
     }
 
     if (!first) {
-      setError("first_name", "First name is required.");
+      setError("first_name", t("contact_first_required", "First name is required."));
       valid = false;
     }
 
     if (!last) {
-      setError("last_name", "Last name is required.");
+      setError("last_name", t("contact_last_required", "Last name is required."));
       valid = false;
     }
 
     if (!email) {
-      setError("email", "Email is required.");
+      setError("email", t("contact_email_required", "Email is required."));
       valid = false;
     } else if (!isValidEmail(email)) {
-      setError("email", "Enter a valid email address.");
+      setError("email", t("contact_email_invalid", "Enter a valid email address."));
       valid = false;
     }
 
     if (!phone) {
-      setError("phone", "Phone number is required.");
+      setError("phone", t("contact_phone_required", "Phone number is required."));
       valid = false;
     } else if (!/^[0-9+()\-\s]+$/.test(phone) || phoneDigitCount(phone) < 7) {
-      setError("phone", "Enter a valid phone number.");
+      setError("phone", t("contact_phone_invalid", "Enter a valid phone number."));
       valid = false;
     }
 
     if (!message) {
-      setError("message", "Message is required.");
+      setError("message", t("contact_message_required", "Message is required."));
       valid = false;
     }
 
     if (!consent) {
-      setError("consent", "Consent is required.");
+      setError("consent", t("contact_consent_required", "Consent is required."));
       valid = false;
     }
 
@@ -165,37 +165,34 @@
 
     if (el.submit) {
       el.submit.disabled = true;
-      el.submit.textContent = "Sending...";
+      el.submit.textContent = t("contact_sending", "Sending...");
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/contact`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      if (!api?.hasBase?.()) {
+        show(el.error, t("api_missing", "Service is temporarily unavailable."));
+        return;
+      }
 
-      const data = await res.json().catch(() => null);
+      const { ok, data } = await api.postJson("/api/contact", payload);
 
-      if (!res.ok || !data || data.success !== true) {
+      if (!ok || !data || data.success !== true) {
         const fieldErrors = data?.error?.field_errors || {};
         Object.entries(fieldErrors).forEach(([key, message]) => {
           setError(key, message);
         });
-        show(el.error, data?.error?.message || "Unable to send message.");
+        show(el.error, data?.error?.message || t("contact_error", "Unable to send message."));
         return;
       }
 
-      show(el.success, "Message sent successfully.");
+      show(el.success, t("contact_success", "Message sent successfully."));
       form.reset();
     } catch (err) {
-      show(el.error, "Unable to send message.");
+      show(el.error, t("contact_error", "Unable to send message."));
     } finally {
       if (el.submit) {
         el.submit.disabled = false;
-        el.submit.textContent = "Submit";
+        el.submit.textContent = t("contact_submit", "Submit");
       }
     }
   }

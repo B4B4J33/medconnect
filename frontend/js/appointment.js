@@ -1,6 +1,7 @@
 (() => {
-  const API_BASE =
-    (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
+  const api = window.MC_API;
+  const ui = window.MC_UI;
+  const t = window.MC_I18N?.t || ((_, fallback) => fallback);
 
   const DRAFT_KEY = "mc_appointment_draft_v1";
   const SLOT_MINUTES = 60;
@@ -31,15 +32,12 @@
   let specialtyToDoctors = new Map();
 
   async function apiFetch(path, opts = {}) {
-    return fetch(`${API_BASE}${path}`, {
-      ...opts,
-      headers: {
-        "Content-Type": "application/json",
-        ...(opts.headers || {}),
-      },
-      cache: "no-store",
-      credentials: "include",
-    });
+    if (!api?.hasBase?.()) {
+      const err = new Error("API base URL is not configured.");
+      err.code = "API_BASE_MISSING";
+      throw err;
+    }
+    return api.apiFetch(path, opts);
   }
 
   function val(node) {
@@ -62,6 +60,15 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function notify(message, type = "error") {
+    if (!message) return;
+    if (ui?.toast) {
+      ui.toast(message, type);
+    } else {
+      alert(message);
+    }
   }
 
   function pad2(n) {
@@ -148,7 +155,7 @@
     });
 
     if (el.prevBtn) el.prevBtn.hidden = step === 1;
-    if (el.nextBtn) el.nextBtn.textContent = step === 4 ? "Confirm" : "Next";
+    if (el.nextBtn) el.nextBtn.textContent = step === 4 ? t("appt_confirm", "Confirm") : t("appt_next", "Next");
   }
 
   function nextStepNumber(fromStep) {
@@ -402,7 +409,7 @@
 
     if (availableDays && dayKey && !availableDays.includes(dayKey)) {
       if (el.date) {
-        el.date.setCustomValidity("Doctor is not available on this day.");
+        el.date.setCustomValidity(t("appt_doctor_unavailable_day", "Doctor is not available on this day."));
         el.date.reportValidity();
       }
       return;
@@ -522,7 +529,7 @@
     if (!payload.email) missing.push("email");
 
     if (missing.length) {
-      alert("Missing required fields: " + missing.join(", "));
+      notify(t("appt_missing_fields", "Missing required fields: ") + missing.join(", "));
       return;
     }
 
@@ -537,18 +544,18 @@
     }
 
     if (res.status === 403) {
-      alert("You are not allowed to create an appointment with this account.");
+      notify(t("appt_forbidden", "You are not allowed to create an appointment with this account."));
       return;
     }
     if (res.status === 409) {
-      alert("Selected time is no longer available. Please choose another slot.");
+      notify(t("appt_time_unavailable", "Selected time is no longer available. Please choose another slot."));
       await refreshTimeSlots();
       return;
     }
 
     if (!res.ok) {
       const txt = await res.text().catch(() => "");
-      alert("Error booking appointment: " + (txt || "Unknown error"));
+      notify(t("appt_error_booking", "Error booking appointment: ") + (txt || t("appt_unknown_error", "Unknown error")));
       return;
     }
 
@@ -559,7 +566,7 @@
       return;
     }
 
-    alert("Appointment booked, but response was unexpected.");
+    notify(t("appt_unexpected_response", "Appointment booked, but response was unexpected."), "info");
   }
 
   function bindNav() {
@@ -576,7 +583,7 @@
         e.preventDefault();
 
         if (!validateStep(currentStep)) {
-          alert("Please complete the required fields.");
+          notify(t("appt_complete_required", "Please complete the required fields."));
           return;
         }
 
@@ -593,6 +600,11 @@
   }
 
   async function init() {
+    if (!api?.hasBase?.()) {
+      notify(t("api_missing", "Service is temporarily unavailable."));
+      return;
+    }
+
     loggedUser = await getMe();
     if (!loggedUser) {
       redirectToLoginReturnHere();
@@ -604,7 +616,7 @@
     try {
       await loadDoctors();
     } catch {
-      alert("Unable to load doctors list.");
+      notify(t("appt_doctors_load_error", "Unable to load doctors list."));
     }
 
     enforceMinDate();

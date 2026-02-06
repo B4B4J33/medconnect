@@ -1,6 +1,6 @@
 (() => {
-  const API_BASE =
-    (window.API_BASE_URL || "").replace(/\/+$/, "") || "http://localhost:5000";
+  const api = window.MC_API;
+  const t = window.MC_I18N?.t || ((_, fallback) => fallback);
 
   const form = document.getElementById("quoteForm");
   if (!form) return;
@@ -74,17 +74,17 @@
   }
 
   function validateFile(file) {
-    if (!file) return "File is required";
+    if (!file) return t("rq_file_required", "File is required");
     const name = String(file.name || "").toLowerCase();
     const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
     if (!ALLOWED_EXTS.includes(ext)) {
-      return "Accepted file types: pdf, jpg, jpeg, png.";
+      return t("rq_file_types", "Accepted file types: pdf, jpg, jpeg, png.");
     }
     if (file.size > MAX_FILE_SIZE) {
-      return "File exceeds 5 MB.";
+      return t("rq_file_size", "File exceeds 5 MB.");
     }
     if (file.size <= 0) {
-      return "File is empty.";
+      return t("rq_file_empty", "File is empty.");
     }
     return null;
   }
@@ -116,9 +116,20 @@
 
       if (!multiple) {
         if (incomingFiles.length > 1) {
-          setError(errorKey, "Only one file is allowed.");
+          setError(errorKey, t("rq_only_one_file", "Only one file is allowed."));
         }
         files = [];
+        const first = incomingFiles[0];
+        if (first) {
+          const err = validateFile(first);
+          if (err) {
+            setError(errorKey, err);
+          } else {
+            files.push(first);
+          }
+        }
+        render();
+        return;
       }
 
       incomingFiles.forEach((file) => {
@@ -238,58 +249,64 @@
     const idDocs = idUploader.getFiles();
 
     if (!first) {
-      setError("first_name", "First name is required.");
+      setError("first_name", t("rq_first_required", "First name is required."));
       valid = false;
     }
 
     if (!last) {
-      setError("last_name", "Last name is required.");
+      setError("last_name", t("rq_last_required", "Last name is required."));
       valid = false;
     }
 
     if (!gender) {
-      setError("gender", "Gender is required.");
+      setError("gender", t("rq_gender_required", "Gender is required."));
       valid = false;
     }
 
     if (!dob) {
-      setError("dob", "Date of birth is required.");
+      setError("dob", t("rq_dob_required", "Date of birth is required."));
       valid = false;
     }
 
     if (!phone) {
-      setError("phone", "Phone number is required.");
+      setError("phone", t("rq_phone_required", "Phone number is required."));
       valid = false;
     } else if (!/^[0-9+()\-\s]+$/.test(phone) || phoneDigitCount(phone) < 7) {
-      setError("phone", "Enter a valid phone number.");
+      setError("phone", t("rq_phone_invalid", "Enter a valid phone number."));
       valid = false;
     }
 
     if (!email) {
-      setError("email", "Email is required.");
+      setError("email", t("rq_email_required", "Email is required."));
       valid = false;
     } else if (!isValidEmail(email)) {
-      setError("email", "Enter a valid email address.");
+      setError("email", t("rq_email_invalid", "Enter a valid email address."));
       valid = false;
     }
 
     if (!categories.length) {
-      setError("service_categories", "Select at least one service category.");
+      setError(
+        "service_categories",
+        t("rq_categories_required", "Select at least one service category.")
+      );
       valid = false;
     }
 
     if (!message) {
-      setError("message", "Message is required.");
+      setError("message", t("rq_message_required", "Message is required."));
       valid = false;
     }
 
     if (!consent) {
-      setError("consent", "Consent is required.");
+      setError("consent", t("rq_consent_required", "Consent is required."));
       valid = false;
     }
 
     if (idDocs.length !== 1) {
-      setError("id_document", "Identity document is required.");
+      setError(
+        "id_document",
+        t("rq_id_required", "Identity document is required.")
+      );
       valid = false;
     } else {
       const err = validateFile(idDocs[0]);
@@ -369,15 +386,14 @@
   async function loadDoctors() {
     if (!el.doctor) return;
     try {
-      const res = await fetch(`${API_BASE}/api/doctors?active=1`, { method: "GET" });
-      if (!res.ok) return;
-      const data = await res.json().catch(() => null);
-      if (!Array.isArray(data)) return;
+      if (!api?.hasBase?.()) return;
+      const { ok, data } = await api.getJson("/api/doctors?active=1");
+      if (!ok || !Array.isArray(data)) return;
 
       data.forEach((doc) => {
         const opt = document.createElement("option");
         opt.value = String(doc.id);
-        opt.textContent = `Dr ${doc.full_name || ""} — ${doc.specialty || ""}`.trim();
+        opt.textContent = `Dr ${doc.full_name || ""} - ${doc.specialty || ""}`.trim();
         el.doctor.appendChild(opt);
       });
     } catch (e) {}
@@ -419,11 +435,16 @@
     const submitBtn = form.querySelector("button[type='submit']");
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
+      submitBtn.textContent = t("rq_submitting", "Submitting...");
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/quote-requests`, {
+      if (!api?.hasBase?.()) {
+        show(el.error, t("api_missing", "Service is temporarily unavailable."));
+        return;
+      }
+
+      const res = await api.apiFetch("/api/quote-requests", {
         method: "POST",
         body: formData,
       });
@@ -435,20 +456,20 @@
         Object.entries(fieldErrors).forEach(([key, message]) => {
           setError(key, message);
         });
-        show(el.error, data?.error?.message || "Unable to submit request.");
+        show(el.error, data?.error?.message || t("rq_submit_error", "Unable to submit request."));
         return;
       }
 
-      show(el.success, "Request submitted successfully.");
+      show(el.success, t("rq_submit_success", "Request submitted successfully."));
       form.reset();
       docsUploader.clear();
       idUploader.clear();
     } catch (err) {
-      show(el.error, "Unable to submit request.");
+      show(el.error, t("rq_submit_error", "Unable to submit request."));
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Submit";
+        submitBtn.textContent = t("rq_submit", "Submit");
       }
     }
   }
