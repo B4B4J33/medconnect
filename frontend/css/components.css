@@ -42,6 +42,7 @@
 .lang-switch {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .lang-switch button {
@@ -54,6 +55,32 @@
 
 .lang-switch button[aria-pressed="true"] {
   text-decoration: underline;
+}
+
+.lang-switch .mc-user-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.lang-switch .mc-user-link:hover {
+  background: rgba(29, 78, 216, 0.08);
+  color: var(--primary);
+  border-color: rgba(29, 78, 216, 0.35);
+}
+
+.lang-switch .mc-user-link:focus-visible {
+  outline: 3px solid rgba(29, 78, 216, 0.35);
+  outline-offset: 2px;
 }
 
 /* --------------------
