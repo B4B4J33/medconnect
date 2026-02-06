@@ -1431,45 +1431,55 @@ input, select {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.dashboard .dash-fieldset {
+.dashboard .dash-fieldset,
+.mc-modal .dash-fieldset {
   border: 0;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
-.dashboard .dash-fieldset legend {
+.dashboard .dash-fieldset legend,
+.mc-modal .dash-fieldset legend {
   font-weight: 600;
   font-size: 0.9rem;
   color: #333;
   padding: 0;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
-.dashboard .dash-fieldset__rows {
+.dashboard .dash-fieldset__rows,
+.mc-modal .dash-fieldset__rows {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
-.dashboard .dash-fieldset__row {
+.dashboard .dash-fieldset__row,
+.mc-modal .dash-fieldset__row {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 2px 0;
+  margin: 0;
+  cursor: pointer;
 }
 
-.dashboard .dash-fieldset__row--solo {
-  padding: 4px 0;
+.dashboard .dash-fieldset__row--solo,
+.mc-modal .dash-fieldset__row--solo {
+  padding: 2px 0;
 }
 
-.dashboard .dash-fieldset__label {
+.dashboard .dash-fieldset__label,
+.mc-modal .dash-fieldset__label {
   font-weight: 600;
   color: #333;
+  line-height: 1.2;
 }
 
-.dashboard .dash-check {
+.dashboard .dash-check,
+.mc-modal .dash-check {
   appearance: none;
   width: 18px;
   height: 18px;
@@ -1478,9 +1488,12 @@ input, select {
   display: inline-grid;
   place-content: center;
   background: #fff;
+  margin: 0;
+  justify-self: end;
 }
 
-.dashboard .dash-check::before {
+.dashboard .dash-check::before,
+.mc-modal .dash-check::before {
   content: "";
   width: 9px;
   height: 9px;
@@ -1490,12 +1503,14 @@ input, select {
   background: var(--color-accent);
 }
 
-.dashboard .dash-check:checked {
+.dashboard .dash-check:checked,
+.mc-modal .dash-check:checked {
   border-color: var(--color-accent);
   background: #e0e7ff;
 }
 
-.dashboard .dash-check:checked::before {
+.dashboard .dash-check:checked::before,
+.mc-modal .dash-check:checked::before {
   transform: scale(1);
 }
 
