@@ -138,7 +138,7 @@
             <input type="file" id="doctorAvatarInput" accept="image/png,image/jpeg,image/webp" hidden>
             <div class="doctor-avatar__preview" id="doctorAvatarPreview" hidden>
               <p class="doctor-avatar__preview-label">Preview</p>
-              <img id="doctorAvatarPreviewImg" class="doctor-avatar__preview-img" alt="Avatar preview">
+              <img id="doctorAvatarPreviewImg" class="doctor-avatar__preview-img" alt="Avatar preview" src="${DEFAULT_AVATAR}">
               <div class="doctor-avatar__buttons">
                 <button type="button" class="btn primary" id="doctorAvatarSave">Save</button>
                 <button type="button" class="btn ghost" id="doctorAvatarCancel">Cancel</button>
@@ -265,7 +265,7 @@
       pendingFile = null;
       if (avatarInput) avatarInput.value = "";
       if (avatarPreview) avatarPreview.hidden = true;
-      if (avatarPreviewImg) avatarPreviewImg.src = "";
+      if (avatarPreviewImg) avatarPreviewImg.src = DEFAULT_AVATAR;
     }
 
     if (profileName) profileName.textContent = user?.name || "Doctor";
