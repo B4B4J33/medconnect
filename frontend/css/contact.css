@@ -1,5 +1,5 @@
 .contact-page {
-  background: #f9f9f9;
+  background: var(--bg-page);
 }
 
 .contact-hero {
@@ -15,7 +15,7 @@
 }
 
 .contact-hero p {
-  color: #444;
+  color: var(--muted);
   margin: 0;
 }
 
@@ -26,9 +26,10 @@
 }
 
 .contact-card {
-  background: #ffffff;
-  border-radius: 22px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
   padding: 32px;
 }
 
@@ -58,7 +59,7 @@
 .form-group label {
   font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: var(--muted);
 }
 
 .form-group input,
@@ -67,11 +68,11 @@
   width: 100%;
   height: 48px;
   padding: 10px 12px;
-  border: 1px solid var(--color-muted);
+  border: 1px solid var(--border);
   border-radius: 14px;
   font-size: 1rem;
-  color: #111111;
-  background: #ffffff;
+  color: var(--text);
+  background: var(--bg-card);
 }
 
 .form-group textarea {
@@ -84,8 +85,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(0, 33, 245, 0.18);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 33, 245, 0.2);
 }
 
 .contact-error {
@@ -110,15 +111,15 @@
 
 .checkbox-label {
   font-weight: 600;
-  color: #333;
+  color: var(--text);
   line-height: 1.3;
 }
 
 .captcha-box {
   width: 304px;
   height: 78px;
-  border: 1px solid var(--color-muted);
-  background: #f9fafb;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -143,17 +144,23 @@
   min-height: 54px;
   padding: 0 28px;
   border-radius: 999px;
-  background: var(--color-accent);
+  background: var(--primary);
   color: #ffffff;
   border: none;
   font-size: 1rem;
   font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
 }
 
 .contact-submit:hover {
-  background: #0018b8;
+  background: var(--primary-strong);
+  box-shadow: 0 8px 18px rgba(0, 33, 245, 0.18);
+}
+
+.contact-submit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 33, 245, 0.25);
 }
 
 .contact-submit:active {
