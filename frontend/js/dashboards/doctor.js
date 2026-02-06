@@ -107,7 +107,7 @@
         credentials: "include",
       });
 
-    const DEFAULT_AVATAR = "assets/avatars/doctor-default.png";
+    const DEFAULT_AVATAR = "assets/img/default_avatar.jpg";
     const API_BASE = String(apiBase || "").replace(/\/+$/, "");
     const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
     const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];

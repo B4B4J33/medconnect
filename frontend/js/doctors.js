@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!listEl || !searchInput || !specialtyFilter) return;
 
   let doctors = [];
-  const DEFAULT_AVATAR = "assets/avatars/doctor-default.png";
+  const DEFAULT_AVATAR = "assets/img/default_avatar.jpg";
   const API_BASE = (window.API_BASE_URL || "").replace(/\/+$/, "");
 
   function normalize(str) {
