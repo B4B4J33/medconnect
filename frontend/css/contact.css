@@ -115,24 +115,6 @@
   line-height: 1.3;
 }
 
-.captcha-box {
-  width: 304px;
-  height: 78px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.captcha-check {
-  width: 22px;
-  height: 22px;
-  border: 2px solid #9ca3af;
-  background: #ffffff;
-}
 
 .form-actions {
   display: flex;
@@ -178,10 +160,6 @@
 @media (max-width: 768px) {
   .contact-card {
     padding: 24px;
-  }
-
-  .captcha-box {
-    width: 100%;
   }
 }
 
