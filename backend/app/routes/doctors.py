@@ -167,6 +167,7 @@ def _serialize_doctor(row: dict, public: bool = False):
         "id": row.get("id"),
         "full_name": row.get("full_name"),
         "specialty": row.get("specialty"),
+        "avatar_url": row.get("avatar_url"),
         "availability_days": days,
         "availability_start": _format_time(row.get("availability_start")),
         "availability_end": _format_time(row.get("availability_end")),

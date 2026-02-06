@@ -99,8 +99,56 @@
         cache: "no-store",
         credentials: "include",
       });
+    const apiFetchForm = (path, formData) =>
+      fetch(`${apiBase}${path}`, {
+        method: "POST",
+        body: formData,
+        cache: "no-store",
+        credentials: "include",
+      });
+
+    const DEFAULT_AVATAR = "assets/avatars/doctor-default.png";
+    const API_BASE = String(apiBase || "").replace(/\/+$/, "");
+    const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+    function resolveAvatarUrl(url) {
+      if (!url) return DEFAULT_AVATAR;
+      if (/^https?:\/\//i.test(url)) return url;
+      if (!API_BASE) return url.startsWith("/") ? url : `/${url}`;
+      return url.startsWith("/") ? `${API_BASE}${url}` : `${API_BASE}/${url}`;
+    }
 
     el.moduleRoot.innerHTML = `
+      <section class="dash-section" id="doctor-profile">
+        <div class="dash-section__head">
+          <h2>Profile</h2>
+        </div>
+        <div class="doctor-profile-card">
+          <div class="doctor-avatar">
+            <img id="doctorAvatarImg" class="doctor-avatar__img" alt="Doctor avatar">
+          </div>
+          <div class="doctor-profile__body">
+            <h3 id="doctorProfileName" class="doctor-profile__name"></h3>
+            <p id="doctorProfileSpecialty" class="doctor-profile__specialty"></p>
+            <div class="doctor-profile__actions">
+              <button type="button" class="btn ghost" id="doctorAvatarChange">Change photo</button>
+              <button type="button" class="btn ghost" id="doctorAvatarRemove" hidden>Remove photo</button>
+            </div>
+            <input type="file" id="doctorAvatarInput" accept="image/png,image/jpeg,image/webp" hidden>
+            <div class="doctor-avatar__preview" id="doctorAvatarPreview" hidden>
+              <p class="doctor-avatar__preview-label">Preview</p>
+              <img id="doctorAvatarPreviewImg" class="doctor-avatar__preview-img" alt="Avatar preview">
+              <div class="doctor-avatar__buttons">
+                <button type="button" class="btn primary" id="doctorAvatarSave">Save</button>
+                <button type="button" class="btn ghost" id="doctorAvatarCancel">Cancel</button>
+              </div>
+            </div>
+            <div class="dash-error" id="doctorAvatarError" hidden></div>
+          </div>
+        </div>
+      </section>
+
       <section class="dash-section" id="doctor-summary">
         <div class="dash-section__head">
           <h2>Summary</h2>
@@ -168,6 +216,171 @@
 
     const apptSection = sectionEls(document.getElementById("doctor-appointments"));
     const apptRange = document.getElementById("doctorApptRange");
+
+    const profileAvatar = document.getElementById("doctorAvatarImg");
+    const profileName = document.getElementById("doctorProfileName");
+    const profileSpecialty = document.getElementById("doctorProfileSpecialty");
+    const changeAvatarBtn = document.getElementById("doctorAvatarChange");
+    const removeAvatarBtn = document.getElementById("doctorAvatarRemove");
+    const avatarInput = document.getElementById("doctorAvatarInput");
+    const avatarPreview = document.getElementById("doctorAvatarPreview");
+    const avatarPreviewImg = document.getElementById("doctorAvatarPreviewImg");
+    const avatarSaveBtn = document.getElementById("doctorAvatarSave");
+    const avatarCancelBtn = document.getElementById("doctorAvatarCancel");
+    const avatarError = document.getElementById("doctorAvatarError");
+
+    let currentAvatarUrl = user?.avatar_url || "";
+    let pendingFile = null;
+    let previewUrl = null;
+
+    function showAvatarError(message) {
+      if (!avatarError) return;
+      avatarError.textContent = message;
+      avatarError.hidden = false;
+    }
+
+    function clearAvatarError() {
+      if (avatarError) avatarError.hidden = true;
+    }
+
+    function setAvatarImage(url) {
+      if (!profileAvatar) return;
+      profileAvatar.src = resolveAvatarUrl(url);
+      profileAvatar.onerror = () => {
+        profileAvatar.onerror = null;
+        profileAvatar.src = DEFAULT_AVATAR;
+      };
+    }
+
+    function updateRemoveButton() {
+      if (!removeAvatarBtn) return;
+      removeAvatarBtn.hidden = !currentAvatarUrl;
+    }
+
+    function resetPreview() {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+      pendingFile = null;
+      if (avatarInput) avatarInput.value = "";
+      if (avatarPreview) avatarPreview.hidden = true;
+      if (avatarPreviewImg) avatarPreviewImg.src = "";
+    }
+
+    if (profileName) profileName.textContent = user?.name || "Doctor";
+    if (profileSpecialty) {
+      const spec = user?.specialty || "";
+      profileSpecialty.textContent = spec;
+      profileSpecialty.hidden = !spec;
+    }
+    setAvatarImage(currentAvatarUrl);
+    updateRemoveButton();
+
+    if (changeAvatarBtn && avatarInput) {
+      changeAvatarBtn.addEventListener("click", () => avatarInput.click());
+    }
+
+    if (avatarInput) {
+      avatarInput.addEventListener("change", () => {
+        clearAvatarError();
+        const file = avatarInput.files && avatarInput.files[0];
+        if (!file) {
+          resetPreview();
+          return;
+        }
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          showAvatarError("Invalid file type. Use JPG, PNG, or WEBP.");
+          resetPreview();
+          return;
+        }
+        if (file.size > MAX_AVATAR_SIZE) {
+          showAvatarError("File too large. Max size is 2 MB.");
+          resetPreview();
+          return;
+        }
+        pendingFile = file;
+        previewUrl = URL.createObjectURL(file);
+        if (avatarPreviewImg) avatarPreviewImg.src = previewUrl;
+        if (avatarPreview) avatarPreview.hidden = false;
+      });
+    }
+
+    if (avatarCancelBtn) {
+      avatarCancelBtn.addEventListener("click", () => {
+        clearAvatarError();
+        resetPreview();
+      });
+    }
+
+    if (avatarSaveBtn) {
+      avatarSaveBtn.addEventListener("click", async () => {
+        if (!pendingFile) return;
+        clearAvatarError();
+
+        avatarSaveBtn.disabled = true;
+        if (avatarCancelBtn) avatarCancelBtn.disabled = true;
+        if (changeAvatarBtn) changeAvatarBtn.disabled = true;
+        if (removeAvatarBtn) removeAvatarBtn.disabled = true;
+        const originalText = avatarSaveBtn.textContent;
+        avatarSaveBtn.textContent = "Saving...";
+
+        const formData = new FormData();
+        formData.append("avatar", pendingFile);
+
+        try {
+          const res = await apiFetchForm("/api/doctor/avatar", formData);
+          const payload = await res.json().catch(() => null);
+          if (!res.ok || !payload || payload.success !== true) {
+            const msg = payload?.error?.message || "Unable to upload avatar.";
+            showAvatarError(msg);
+          } else {
+            currentAvatarUrl = payload?.data?.avatar_url || "";
+            setAvatarImage(currentAvatarUrl);
+            updateRemoveButton();
+            resetPreview();
+          }
+        } catch (err) {
+          showAvatarError("Unable to upload avatar.");
+        } finally {
+          avatarSaveBtn.disabled = false;
+          if (avatarCancelBtn) avatarCancelBtn.disabled = false;
+          if (changeAvatarBtn) changeAvatarBtn.disabled = false;
+          if (removeAvatarBtn) removeAvatarBtn.disabled = false;
+          avatarSaveBtn.textContent = originalText;
+        }
+      });
+    }
+
+    if (removeAvatarBtn) {
+      removeAvatarBtn.addEventListener("click", async () => {
+        clearAvatarError();
+        removeAvatarBtn.disabled = true;
+        const originalText = removeAvatarBtn.textContent;
+        removeAvatarBtn.textContent = "Removing...";
+        try {
+          const res = await fetch(`${apiBase}/api/doctor/avatar`, {
+            method: "DELETE",
+            cache: "no-store",
+            credentials: "include",
+          });
+          const payload = await res.json().catch(() => null);
+          if (!res.ok || !payload || payload.success !== true) {
+            const msg = payload?.error?.message || "Unable to remove avatar.";
+            showAvatarError(msg);
+          } else {
+            currentAvatarUrl = "";
+            setAvatarImage(currentAvatarUrl);
+            updateRemoveButton();
+          }
+        } catch (err) {
+          showAvatarError("Unable to remove avatar.");
+        } finally {
+          removeAvatarBtn.disabled = false;
+          removeAvatarBtn.textContent = originalText;
+        }
+      });
+    }
 
     const state = {
       range: "today",

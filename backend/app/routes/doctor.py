@@ -1,4 +1,7 @@
 import datetime
+import time
+import uuid
+from pathlib import Path
 from flask import Blueprint, jsonify, request, session
 
 from app.db import get_connection
@@ -8,6 +11,13 @@ from sms import send_sms
 doctor_bp = Blueprint("doctor", __name__)
 
 ALLOWED_STATUS = {"booked", "confirmed", "cancelled", "completed"}
+ALLOWED_AVATAR_MIME = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+}
+MAX_AVATAR_SIZE = 2 * 1024 * 1024
+AVATARS_DIR = Path(__file__).resolve().parents[2] / "uploads" / "avatars"
 
 
 def _error(status: int, code: str, message: str):
@@ -31,6 +41,36 @@ def _doctor_scope_id():
         return int(raw)
     except (TypeError, ValueError):
         return None
+
+
+def _ensure_avatars_dir():
+    AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _avatar_ext_from_mime(mime: str):
+    return ALLOWED_AVATAR_MIME.get((mime or "").strip().lower())
+
+
+def _avatar_filename(doctor_id: int, ext: str) -> str:
+    stamp = int(time.time())
+    token = uuid.uuid4().hex[:8]
+    return f"doctor_{doctor_id}_{stamp}_{token}.{ext}"
+
+
+def _delete_avatar_file(avatar_url: str):
+    if not avatar_url:
+        return
+    if not avatar_url.startswith("/uploads/avatars/"):
+        return
+    filename = Path(avatar_url).name
+    if not filename:
+        return
+    path = AVATARS_DIR / filename
+    if path.exists() and path.is_file():
+        try:
+            path.unlink()
+        except Exception:
+            pass
 
 
 def _serialize_appt(row: dict):
@@ -284,3 +324,108 @@ def doctor_notify_patient(appt_id: int):
             "error": err,
         },
     }), 200
+
+
+@doctor_bp.post("/api/doctor/avatar")
+def doctor_upload_avatar():
+    guard = _require_doctor()
+    if guard:
+        return guard
+
+    doctor_id = _doctor_scope_id()
+    if doctor_id is None:
+        return _error(403, "forbidden", "Forbidden")
+
+    file = request.files.get("avatar")
+    if not file or not file.filename:
+        return _error(400, "validation_error", "avatar file is required")
+
+    ext = _avatar_ext_from_mime(file.mimetype or "")
+    if not ext:
+        return _error(400, "validation_error", "Invalid file type. Use JPG, PNG, or WEBP.")
+
+    data = file.read()
+    if not data:
+        return _error(400, "validation_error", "avatar file is empty")
+    if len(data) > MAX_AVATAR_SIZE:
+        return _error(400, "validation_error", "avatar file must be 2MB or smaller")
+
+    _ensure_avatars_dir()
+    filename = _avatar_filename(doctor_id, ext)
+    file_path = AVATARS_DIR / filename
+
+    try:
+        with open(file_path, "wb") as f:
+            f.write(data)
+    except Exception:
+        return _error(500, "server_error", "Unable to save avatar")
+
+    avatar_url = f"/uploads/avatars/{filename}"
+    previous_url = None
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT avatar_url FROM doctors WHERE id = %s LIMIT 1", (doctor_id,))
+            row = cur.fetchone()
+            if not row:
+                try:
+                    file_path.unlink()
+                except Exception:
+                    pass
+                return _error(404, "not_found", "Doctor not found")
+
+            previous_url = row.get("avatar_url")
+            cur.execute(
+                """
+                UPDATE doctors
+                SET avatar_url = %s, updated_at = NOW()
+                WHERE id = %s
+                RETURNING avatar_url
+                """,
+                (avatar_url, doctor_id),
+            )
+            updated = cur.fetchone()
+        conn.commit()
+
+    if previous_url and previous_url != avatar_url:
+        _delete_avatar_file(previous_url)
+
+    return jsonify({"success": True, "data": {"avatar_url": updated.get("avatar_url")}}), 200
+
+
+@doctor_bp.delete("/api/doctor/avatar")
+def doctor_delete_avatar():
+    guard = _require_doctor()
+    if guard:
+        return guard
+
+    doctor_id = _doctor_scope_id()
+    if doctor_id is None:
+        return _error(403, "forbidden", "Forbidden")
+
+    previous_url = None
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT avatar_url FROM doctors WHERE id = %s LIMIT 1", (doctor_id,))
+            row = cur.fetchone()
+            if not row:
+                return _error(404, "not_found", "Doctor not found")
+
+            previous_url = row.get("avatar_url")
+            cur.execute(
+                """
+                UPDATE doctors
+                SET avatar_url = NULL, updated_at = NOW()
+                WHERE id = %s
+                RETURNING avatar_url
+                """,
+                (doctor_id,),
+            )
+            cur.fetchone()
+        conn.commit()
+
+    if previous_url:
+        _delete_avatar_file(previous_url)
+
+    return jsonify({"success": True, "data": {}}), 200

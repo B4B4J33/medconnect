@@ -197,7 +197,22 @@ def me():
         session.clear()
         return error_response(401, "unauthorized", "Unauthorized")
 
-    return success_response({"user": _public_user(user)})
+    user_payload = _public_user(user)
+    if (user_payload.get("role") or "").strip().lower() == "doctor" and user_payload.get("doctor_id"):
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT full_name, specialty, avatar_url FROM doctors WHERE id = %s LIMIT 1",
+                    (user_payload.get("doctor_id"),),
+                )
+                doctor_row = cur.fetchone()
+        if doctor_row:
+            user_payload["specialty"] = doctor_row.get("specialty")
+            user_payload["avatar_url"] = doctor_row.get("avatar_url")
+            if doctor_row.get("full_name"):
+                user_payload["name"] = doctor_row.get("full_name")
+
+    return success_response({"user": user_payload})
 
 
 @auth_bp.post("/api/auth/forgot-password")

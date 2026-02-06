@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!listEl || !searchInput || !specialtyFilter) return;
 
   let doctors = [];
+  const DEFAULT_AVATAR = "assets/avatars/doctor-default.png";
+  const API_BASE = (window.API_BASE_URL || "").replace(/\/+$/, "");
 
   function normalize(str) {
     return String(str || "").trim().toLowerCase();
@@ -18,6 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function resolveAvatarUrl(url) {
+    if (!url) return DEFAULT_AVATAR;
+    if (/^https?:\/\//i.test(url)) return url;
+    if (!API_BASE) return url.startsWith("/") ? url : `/${url}`;
+    return url.startsWith("/") ? `${API_BASE}${url}` : `${API_BASE}/${url}`;
   }
 
   function buildSpecialtyFilter(items) {
@@ -71,9 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const bookUrl =
         `appointment.html?specialty=${encodeURIComponent(d.specialty)}&doctor=${id}`;
 
+      const avatarUrl = resolveAvatarUrl(d.avatar_url);
+
       return `
         <article class="doctor-card" data-specialty="${normalize(d.specialty)}">
-          <img src="assets/img/doc.jpg" alt="${name}" class="doctor-photo">
+          <img src="${avatarUrl}" alt="${name}" class="doctor-photo" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';">
           <h3>${name}</h3>
           <p>${specialty}</p>
           <a href="${bookUrl}" class="btn primary">Book</a>

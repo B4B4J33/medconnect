@@ -104,6 +104,7 @@
     // Get doctor ID from URL
     const params = new URLSearchParams(window.location.search);
     const doctorId = params.get("id");
+    const DEFAULT_AVATAR = "assets/avatars/doctor-default.png";
 
     // Load doctor data
     fetch("data/doctors.json")
@@ -113,9 +114,10 @@
         const profile = document.getElementById("doctorProfile");
 
         if (doctor) {
+          const avatar = doctor.photo || DEFAULT_AVATAR;
           profile.innerHTML = `
             <div class="doctor-card profile-view">
-              <img src="${doctor.photo}" alt="${doctor.name}" class="doctor-photo">
+              <img src="${avatar}" alt="${doctor.name}" class="doctor-photo" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';">
               <h2>${doctor.name}</h2>
               <p><strong>${doctor.specialty}</strong></p>
               <p>${doctor.bio}</p>
