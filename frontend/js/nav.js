@@ -15,7 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
     userLink.className = "mc-user-link";
     userLink.href = "dashboard.html";
     userLink.hidden = true;
-    userLink.textContent = t("nav_account", "Account");
+    userLink.innerHTML = `<i class="fi fi-rr-user" aria-hidden="true"></i><span>${t(
+      "nav_account",
+      "Account"
+    )}</span>`;
+    userLink.setAttribute("aria-label", t("nav_account", "Account"));
     langSwitch.prepend(userLink);
   }
 
@@ -89,8 +93,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!ok || !data || data.success !== true || !data.data?.user) return;
       const user = data.data.user;
       const label = user.name || user.full_name || user.email || t("nav_account", "Account");
-      userLink.textContent = label;
-      userLink.title = user.email || label;
+      const labelText = label;
+      const labelEl = userLink.querySelector("span");
+      if (labelEl) {
+        labelEl.textContent = labelText;
+      } else {
+        userLink.textContent = labelText;
+      }
+      userLink.title = user.email || labelText;
       userLink.hidden = false;
     } catch (e) {}
   }
