@@ -118,9 +118,8 @@ def create_contact_message():
         f"Submitted: {submitted_at or ''}",
     ])
 
-    notify_email = os.getenv("CONTACT_NOTIFY_EMAIL") or os.getenv("ADMIN_NOTIFY_EMAIL") or "info@medconnect.mu"
     send_email(
-        notify_email,
+        "l.gooroovadoo@gmail.com",
         "New Contact Us Message",
         body,
     )

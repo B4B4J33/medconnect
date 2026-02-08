@@ -317,9 +317,8 @@ def create_quote_request():
         f"Submitted: {submitted_at}",
     ])
 
-    notify_email = os.getenv("QUOTE_NOTIFY_EMAIL") or os.getenv("ADMIN_NOTIFY_EMAIL") or "info@medconnect.mu"
     send_email(
-        notify_email,
+        "l.gooroovadoo@gmail.com",
         "New Quote Request Received",
         body,
     )
