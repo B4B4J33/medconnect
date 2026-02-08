@@ -25,7 +25,7 @@
     notFound: document.getElementById("doctorNotFound"),
   };
 
-  const DEFAULT_AVATAR = "/assets/avatars/doctor-default.png";
+  const DEFAULT_AVATAR = "assets/img/default_avatar.jpg";
   const LOREM =
     "This doctor is committed to patient-centered care with a focus on prevention, clear communication, and evidence-based treatment. This profile will be updated with a full professional biography.";
 
