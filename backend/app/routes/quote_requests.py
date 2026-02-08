@@ -1,10 +1,12 @@
+import csv
+import io
 import json
 import os
 import re
 import uuid
 import datetime
 from pathlib import Path
-from flask import Blueprint, request, send_file, jsonify, session
+from flask import Blueprint, request, send_file, jsonify, session, Response
 
 from app.db import get_connection
 from app.routes.utils import success_response, error_response
@@ -400,6 +402,110 @@ def admin_list_quote_requests():
         })
 
     return success_response({"count": len(items), "items": items})
+
+
+@quote_requests_bp.get("/api/admin/quote-requests/export")
+def admin_export_quote_requests():
+    guard = _require_admin()
+    if guard:
+        return guard
+
+    status = (request.args.get("status") or "").strip().lower()
+    q = (request.args.get("q") or "").strip()
+    from_date = (request.args.get("from") or "").strip()
+    to_date = (request.args.get("to") or "").strip()
+
+    filters = []
+    params = []
+
+    if status:
+        filters.append("qr.status = %s")
+        params.append(status)
+
+    if q:
+        filters.append(
+            "(LOWER(qr.first_name) LIKE %s OR LOWER(qr.last_name) LIKE %s OR LOWER(qr.email) LIKE %s "
+            "OR LOWER(qr.phone) LIKE %s OR LOWER(qr.message) LIKE %s)"
+        )
+        like = f"%{q.lower()}%"
+        params.extend([like, like, like, like, like])
+
+    if from_date:
+        try:
+            datetime.date.fromisoformat(from_date)
+            filters.append("qr.created_at::date >= %s")
+            params.append(from_date)
+        except ValueError:
+            pass
+
+    if to_date:
+        try:
+            datetime.date.fromisoformat(to_date)
+            filters.append("qr.created_at::date <= %s")
+            params.append(to_date)
+        except ValueError:
+            pass
+
+    sql = """
+        SELECT qr.id, qr.first_name, qr.last_name, qr.email, qr.phone,
+               qr.gender, qr.dob, qr.status, qr.service_categories,
+               qr.message, qr.admin_notes, qr.created_at,
+               d.full_name AS doctor_name
+        FROM quote_requests qr
+        LEFT JOIN doctors d ON d.id = qr.doctor_id
+    """
+
+    if filters:
+        sql += " WHERE " + " AND ".join(filters)
+
+    sql += " ORDER BY qr.created_at DESC"
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, tuple(params))
+            rows = cur.fetchall() or []
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "gender",
+        "dob",
+        "status",
+        "service_categories",
+        "preferred_doctor",
+        "message",
+        "admin_notes",
+    ])
+
+    for r in rows:
+        categories = _categories_from_row(r.get("service_categories"))
+        writer.writerow([
+            r.get("id"),
+            r.get("created_at"),
+            r.get("first_name"),
+            r.get("last_name"),
+            r.get("email"),
+            r.get("phone"),
+            r.get("gender"),
+            r.get("dob"),
+            r.get("status"),
+            ", ".join(categories),
+            r.get("doctor_name"),
+            r.get("message"),
+            r.get("admin_notes"),
+        ])
+
+    csv_data = output.getvalue()
+    headers = {
+        "Content-Disposition": "attachment; filename=quote-requests-export.csv"
+    }
+    return Response(csv_data, mimetype="text/csv; charset=utf-8", headers=headers)
 
 
 @quote_requests_bp.get("/api/admin/quote-requests/<int:quote_request_id>")

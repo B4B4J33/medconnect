@@ -131,6 +131,7 @@
             <input type="date" id="quoteTo" />
           </label>
           <button class="btn ghost" id="quoteApply">Apply</button>
+          <button class="btn ghost" id="quoteExport">Export CSV</button>
         </div>
       </div>
       <div class="dash-loading" data-role="loading">Loading...</div>
@@ -161,6 +162,7 @@
     const fromInput = sectionRoot.querySelector("#quoteFrom");
     const toInput = sectionRoot.querySelector("#quoteTo");
     const applyBtn = sectionRoot.querySelector("#quoteApply");
+    const exportBtn = sectionRoot.querySelector("#quoteExport");
 
     const state = {
       items: [],
@@ -222,6 +224,29 @@
       const items = payload?.data?.items || [];
       state.items = items;
       render(items);
+    }
+
+    function downloadQuoteCsv() {
+      const params = new URLSearchParams();
+      const status = statusFilter?.value || "";
+      const q = searchInput?.value || "";
+      const from = fromInput?.value || "";
+      const to = toInput?.value || "";
+
+      if (status) params.set("status", status);
+      if (q) params.set("q", q);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const qs = params.toString();
+      const url = `${apiBase}/api/admin/quote-requests/export${qs ? `?${qs}` : ""}`;
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
 
     async function openQuoteModal(id) {
@@ -379,6 +404,12 @@
     });
 
     if (applyBtn) applyBtn.addEventListener("click", loadList);
+    if (exportBtn) {
+      exportBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        downloadQuoteCsv();
+      });
+    }
 
     loadList();
   }

@@ -1,10 +1,21 @@
-from flask import Blueprint, jsonify, request, session
+import csv
+import io
+from flask import Blueprint, jsonify, request, session, Response
 
 from app.db import get_connection
 from app.routes.utils import success_response, error_response
 from sms import send_sms
 
 appointments_bp = Blueprint("appointments", __name__)
+
+
+def _require_admin():
+    role = (session.get("role") or "").strip().lower()
+    if not role:
+        return error_response(401, "unauthorized", "Unauthorized")
+    if role != "admin":
+        return error_response(403, "forbidden", "Forbidden")
+    return None
 
 
 def fetch_doctor(doctor_id: int):
@@ -27,6 +38,89 @@ def fetch_one(appt_id: int):
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM appointments WHERE id = %s", (appt_id,))
             return cur.fetchone()
+
+
+@appointments_bp.get("/api/admin/appointments/export")
+def admin_export_appointments():
+    guard = _require_admin()
+    if guard:
+        return guard
+
+    status = (request.args.get("status") or "").strip().lower()
+    doctor_id = (request.args.get("doctor_id") or "").strip()
+    from_date = (request.args.get("from") or "").strip()
+    to_date = (request.args.get("to") or "").strip()
+
+    where = []
+    params = []
+
+    if status:
+        where.append("LOWER(COALESCE(status, '')) = %s")
+        params.append(status)
+
+    if doctor_id:
+        try:
+            did = int(doctor_id)
+            where.append("doctor_id = %s")
+            params.append(did)
+        except ValueError:
+            return error_response(400, "validation_error", "doctor_id must be an integer")
+
+    if from_date:
+        where.append("date >= %s")
+        params.append(from_date)
+
+    if to_date:
+        where.append("date <= %s")
+        params.append(to_date)
+
+    sql = """
+        SELECT id, date, time, name, email, phone, doctor, specialty, status, doctor_id
+        FROM appointments
+    """
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY date DESC, time DESC, id DESC"
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, tuple(params))
+            rows = cur.fetchall() or []
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "date",
+        "time",
+        "patient_name",
+        "patient_email",
+        "patient_phone",
+        "doctor_name",
+        "doctor_id",
+        "specialty",
+        "status",
+    ])
+
+    for r in rows:
+        writer.writerow([
+            r.get("id"),
+            r.get("date"),
+            r.get("time"),
+            r.get("name"),
+            r.get("email"),
+            r.get("phone"),
+            r.get("doctor"),
+            r.get("doctor_id"),
+            r.get("specialty"),
+            r.get("status"),
+        ])
+
+    csv_data = output.getvalue()
+    headers = {
+        "Content-Disposition": "attachment; filename=appointments-export.csv"
+    }
+    return Response(csv_data, mimetype="text/csv; charset=utf-8", headers=headers)
 
 @appointments_bp.route("/api/appointments/slots", methods=["GET"])
 def get_booked_slots():

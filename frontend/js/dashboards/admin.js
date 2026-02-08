@@ -167,6 +167,7 @@
               <input type="date" id="adminApptTo" />
             </label>
             <button class="btn ghost" id="adminApptClear">Clear</button>
+            <button class="btn ghost" id="adminApptExport">Export CSV</button>
           </div>
         </div>
         <div class="dash-loading" data-role="loading">Loading...</div>
@@ -201,6 +202,7 @@
     const apptFrom = document.getElementById("adminApptFrom");
     const apptTo = document.getElementById("adminApptTo");
     const apptClear = document.getElementById("adminApptClear");
+    const apptExport = document.getElementById("adminApptExport");
 
     const state = {
       doctors: [],
@@ -562,6 +564,29 @@
       applyFilters();
     }
 
+    function downloadAppointmentsCsv() {
+      const params = new URLSearchParams();
+      const status = apptStatusFilter?.value || "";
+      const doctorId = apptDoctorFilter?.value || "";
+      const from = apptFrom?.value || "";
+      const to = apptTo?.value || "";
+
+      if (status) params.set("status", status);
+      if (doctorId) params.set("doctor_id", doctorId);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const qs = params.toString();
+      const url = `${apiBase}/api/admin/appointments/export${qs ? `?${qs}` : ""}`;
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
     function openDoctorModal(doctor) {
       const isEdit = !!doctor;
       const selectedDays = new Set(doctor?.availability_days || []);
@@ -843,6 +868,13 @@
         if (apptFrom) apptFrom.value = "";
         if (apptTo) apptTo.value = "";
         applyFilters();
+      });
+    }
+
+    if (apptExport) {
+      apptExport.addEventListener("click", (e) => {
+        e.preventDefault();
+        downloadAppointmentsCsv();
       });
     }
 
