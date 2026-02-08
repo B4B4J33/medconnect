@@ -31,12 +31,12 @@
 
   function show(node) {
     if (!node) return;
-    node.hidden = false;
+    node.classList.remove("hidden");
   }
 
   function hide(node) {
     if (!node) return;
-    node.hidden = true;
+    node.classList.add("hidden");
   }
 
   function normRole(role) {
@@ -127,7 +127,7 @@
     function setLiVisibleByHref(href, visible) {
       const a = document.querySelector(`.side-menu a[href="${href}"]`);
       const li = a ? a.closest("li") : null;
-      if (li) li.hidden = !visible;
+      if (li) li.classList.toggle("hidden", !visible);
     }
 
     setLiVisibleByHref("dashboard.html", isAuth);
@@ -136,7 +136,7 @@
 
     document.querySelectorAll(".side-menu li[data-roles]").forEach((li) => {
       if (!isAuth) {
-        li.hidden = true;
+        li.classList.add("hidden");
         return;
       }
       const roles = (li.getAttribute("data-roles") || "")
@@ -145,10 +145,10 @@
         .filter(Boolean);
 
       if (!roles.length) {
-        li.hidden = false;
+        li.classList.remove("hidden");
         return;
       }
-      li.hidden = !roles.includes(role);
+      li.classList.toggle("hidden", !roles.includes(role));
     });
   }
 
@@ -167,14 +167,14 @@
         footer || '<button type="button" class="btn ghost" data-close="true">Close</button>';
     }
 
-    el.modal.root.hidden = false;
+    el.modal.root.classList.remove("hidden");
     el.modal.root.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   }
 
   function closeModal() {
     if (!el.modal.root) return;
-    el.modal.root.hidden = true;
+    el.modal.root.classList.add("hidden");
     el.modal.root.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
   }
@@ -292,9 +292,9 @@
           <h2>${t("dashboard_appointments", "Appointments")}</h2>
         </div>
         <div class="dash-loading" data-role="loading">${t("loading", "Loading...")}</div>
-        <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>${t("dashboard_no_appointments", "No appointments to display.")}</div>
-        <div class="table-wrap" data-role="table" hidden>
+        <div class="dash-error hidden" data-role="error"></div>
+        <div class="dash-empty hidden" data-role="empty">${t("dashboard_no_appointments", "No appointments to display.")}</div>
+        <div class="table-wrap hidden" data-role="table">
           <table class="mc-table">
             <thead>
               <tr>
@@ -316,9 +316,9 @@
           <h2>${t("dashboard_reports", "Lab Reports")}</h2>
         </div>
         <div class="dash-loading" data-role="loading">${t("loading", "Loading...")}</div>
-        <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>${t("dashboard_no_reports", "No lab reports to display.")}</div>
-        <div class="table-wrap" data-role="table" hidden>
+        <div class="dash-error hidden" data-role="error"></div>
+        <div class="dash-empty hidden" data-role="empty">${t("dashboard_no_reports", "No lab reports to display.")}</div>
+        <div class="table-wrap hidden" data-role="table">
           <table class="mc-table">
             <thead>
               <tr>

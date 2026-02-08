@@ -22,12 +22,12 @@
 
   function show(node) {
     if (!node) return;
-    node.hidden = false;
+    node.classList.remove("hidden");
   }
 
   function hide(node) {
     if (!node) return;
-    node.hidden = true;
+    node.classList.add("hidden");
   }
 
   function sectionEls(root) {
@@ -120,9 +120,9 @@
           </div>
         </div>
         <div class="dash-loading" data-role="loading">Loading...</div>
-        <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>No doctors found.</div>
-        <div class="table-wrap" data-role="table" hidden>
+        <div class="dash-error hidden" data-role="error"></div>
+        <div class="dash-empty hidden" data-role="empty">No doctors found.</div>
+        <div class="table-wrap hidden" data-role="table">
           <table class="mc-table">
             <thead>
               <tr>
@@ -171,9 +171,9 @@
           </div>
         </div>
         <div class="dash-loading" data-role="loading">Loading...</div>
-        <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>No appointments found.</div>
-        <div class="table-wrap" data-role="table" hidden>
+        <div class="dash-error hidden" data-role="error"></div>
+        <div class="dash-empty hidden" data-role="empty">No appointments found.</div>
+        <div class="table-wrap hidden" data-role="table">
           <table class="mc-table">
             <thead>
               <tr>
@@ -639,7 +639,7 @@
               <input class="dash-check" type="checkbox" id="doctorActive" ${doctor?.is_active !== false ? "checked" : ""}>
             </label>
           </div>
-          <div class="dash-error" id="doctorFormError" hidden></div>
+          <div class="dash-error hidden" id="doctorFormError"></div>
         </form>
       `;
 
@@ -673,11 +673,11 @@
       function showError(message) {
         if (!errorBox) return;
         errorBox.textContent = message;
-        errorBox.hidden = false;
+        errorBox.classList.remove("hidden");
       }
 
       function clearError() {
-        if (errorBox) errorBox.hidden = true;
+        if (errorBox) errorBox.classList.add("hidden");
       }
 
       if (!saveBtn) return;

@@ -1,5 +1,6 @@
 (() => {
   const STATUS_OPTIONS = ["booked", "confirmed", "cancelled", "completed"];
+  const ui = window.MC_UI;
 
   function escapeHtml(v) {
     return String(v ?? "")
@@ -12,12 +13,12 @@
 
   function show(node) {
     if (!node) return;
-    node.hidden = false;
+    node.classList.remove("hidden");
   }
 
   function hide(node) {
     if (!node) return;
-    node.hidden = true;
+    node.classList.add("hidden");
   }
 
   function sectionEls(root) {
@@ -69,6 +70,25 @@
     hide(section.error);
     hide(section.empty);
     show(section.tableWrap);
+  }
+
+  function listToText(items) {
+    if (!Array.isArray(items)) return "";
+    return items.map((v) => String(v || "").trim()).filter(Boolean).join("\n");
+  }
+
+  function textToList(value) {
+    return String(value || "")
+      .split("\n")
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
+  function notify(message, type = "error") {
+    if (!message) return;
+    if (ui?.toast) {
+      ui.toast(message, type);
+    }
   }
 
   function buildKvRows(rows) {
@@ -133,10 +153,10 @@
             <p id="doctorProfileSpecialty" class="doctor-profile__specialty"></p>
             <div class="doctor-profile__actions">
               <button type="button" class="btn ghost" id="doctorAvatarChange">Change photo</button>
-              <button type="button" class="btn ghost" id="doctorAvatarRemove" hidden>Remove photo</button>
+              <button type="button" class="btn ghost hidden" id="doctorAvatarRemove">Remove photo</button>
             </div>
-            <input type="file" id="doctorAvatarInput" accept="image/png,image/jpeg,image/webp" hidden>
-            <div class="doctor-avatar__preview" id="doctorAvatarPreview" hidden>
+            <input type="file" id="doctorAvatarInput" accept="image/png,image/jpeg,image/webp" class="hidden">
+            <div class="doctor-avatar__preview hidden" id="doctorAvatarPreview">
               <p class="doctor-avatar__preview-label">Preview</p>
               <img id="doctorAvatarPreviewImg" class="doctor-avatar__preview-img" alt="Avatar preview" src="${DEFAULT_AVATAR}">
               <div class="doctor-avatar__buttons">
@@ -144,9 +164,44 @@
                 <button type="button" class="btn ghost" id="doctorAvatarCancel">Cancel</button>
               </div>
             </div>
-            <div class="dash-error" id="doctorAvatarError" hidden></div>
+            <div class="dash-error hidden" id="doctorAvatarError"></div>
           </div>
         </div>
+      </section>
+
+      <section class="dash-section" id="doctor-details">
+        <div class="dash-section__head">
+          <h2>Profile details</h2>
+          <span class="muted">Shown on your public profile</span>
+        </div>
+        <div class="dash-loading" data-role="loading">Loading...</div>
+        <div class="dash-error hidden" data-role="error"></div>
+        <form class="dash-form hidden" data-role="form">
+          <div class="dash-form__row">
+            <label for="doctorBio">Bio</label>
+            <textarea id="doctorBio" rows="5" placeholder="Short professional summary"></textarea>
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorExperienceInput">Experience</label>
+            <textarea id="doctorExperienceInput" rows="4" placeholder="One item per line"></textarea>
+            <span class="muted">One item per line</span>
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorCertificationsInput">Certifications</label>
+            <textarea id="doctorCertificationsInput" rows="4" placeholder="One item per line"></textarea>
+            <span class="muted">One item per line</span>
+          </div>
+          <div class="dash-form__row">
+            <label for="doctorSpecialisationsInput">Specialisations</label>
+            <textarea id="doctorSpecialisationsInput" rows="4" placeholder="One item per line"></textarea>
+            <span class="muted">One item per line</span>
+          </div>
+          <div class="dash-inline">
+            <button type="submit" class="btn primary" id="doctorDetailsSave">Save changes</button>
+            <button type="button" class="btn ghost" id="doctorDetailsReset">Reset</button>
+            <span class="muted hidden" id="doctorDetailsSaved">Saved</span>
+          </div>
+        </form>
       </section>
 
       <section class="dash-section" id="doctor-summary">
@@ -154,8 +209,8 @@
           <h2>Summary</h2>
         </div>
         <div class="dash-loading" data-role="loading">Loading...</div>
-        <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-cards" data-role="cards" hidden>
+        <div class="dash-error hidden" data-role="error"></div>
+        <div class="dash-cards hidden" data-role="cards">
           <div class="dash-card">
             <p class="dash-card__label">Today</p>
             <p class="dash-card__value" data-role="today">0</p>
@@ -186,9 +241,9 @@
           </div>
         </div>
         <div class="dash-loading" data-role="loading">Loading...</div>
-        <div class="dash-error" data-role="error" hidden></div>
-        <div class="dash-empty" data-role="empty" hidden>No appointments to display.</div>
-        <div class="table-wrap" data-role="table" hidden>
+        <div class="dash-error hidden" data-role="error"></div>
+        <div class="dash-empty hidden" data-role="empty">No appointments to display.</div>
+        <div class="table-wrap hidden" data-role="table">
           <table class="mc-table">
             <thead>
               <tr>
@@ -229,18 +284,31 @@
     const avatarCancelBtn = document.getElementById("doctorAvatarCancel");
     const avatarError = document.getElementById("doctorAvatarError");
 
+    const detailsRoot = document.getElementById("doctor-details");
+    const detailsLoading = detailsRoot?.querySelector('[data-role="loading"]');
+    const detailsError = detailsRoot?.querySelector('[data-role="error"]');
+    const detailsForm = detailsRoot?.querySelector('[data-role="form"]');
+    const detailsSaved = document.getElementById("doctorDetailsSaved");
+    const detailsSave = document.getElementById("doctorDetailsSave");
+    const detailsReset = document.getElementById("doctorDetailsReset");
+    const detailsBio = document.getElementById("doctorBio");
+    const detailsExperience = document.getElementById("doctorExperienceInput");
+    const detailsCerts = document.getElementById("doctorCertificationsInput");
+    const detailsSpecs = document.getElementById("doctorSpecialisationsInput");
+
     let currentAvatarUrl = user?.avatar_url || "";
     let pendingFile = null;
     let previewUrl = null;
+    let detailsSnapshot = null;
 
     function showAvatarError(message) {
       if (!avatarError) return;
       avatarError.textContent = message;
-      avatarError.hidden = false;
+      avatarError.classList.remove("hidden");
     }
 
     function clearAvatarError() {
-      if (avatarError) avatarError.hidden = true;
+      if (avatarError) avatarError.classList.add("hidden");
     }
 
     function setAvatarImage(url) {
@@ -254,7 +322,69 @@
 
     function updateRemoveButton() {
       if (!removeAvatarBtn) return;
-      removeAvatarBtn.hidden = !currentAvatarUrl;
+      removeAvatarBtn.classList.toggle("hidden", !currentAvatarUrl);
+    }
+
+    function setDetailsLoading() {
+      if (!detailsRoot) return;
+      show(detailsLoading);
+      hide(detailsError);
+      hide(detailsForm);
+      if (detailsSaved) detailsSaved.classList.add("hidden");
+    }
+
+    function setDetailsError(message) {
+      if (!detailsRoot) return;
+      hide(detailsLoading);
+      hide(detailsForm);
+      if (detailsError) {
+        detailsError.textContent = message;
+        show(detailsError);
+      }
+      if (detailsSaved) detailsSaved.classList.add("hidden");
+    }
+
+    function showDetailsError(message) {
+      if (detailsError) {
+        detailsError.textContent = message;
+        show(detailsError);
+      }
+    }
+
+    function clearDetailsError() {
+      if (detailsError) detailsError.classList.add("hidden");
+    }
+
+    function setDetailsReady() {
+      if (!detailsRoot) return;
+      hide(detailsLoading);
+      hide(detailsError);
+      show(detailsForm);
+    }
+
+    function fillDetailsForm(data) {
+      if (!data) return;
+      if (detailsBio) detailsBio.value = data.bio || "";
+      if (detailsExperience) detailsExperience.value = listToText(data.experience);
+      if (detailsCerts) detailsCerts.value = listToText(data.certifications);
+      if (detailsSpecs) detailsSpecs.value = listToText(data.specialisations);
+      detailsSnapshot = {
+        bio: data.bio || "",
+        experience: listToText(data.experience),
+        certifications: listToText(data.certifications),
+        specialisations: listToText(data.specialisations),
+      };
+      if (detailsSaved) detailsSaved.classList.add("hidden");
+    }
+
+    function resetDetailsForm() {
+      if (!detailsSnapshot) return;
+      if (detailsBio) detailsBio.value = detailsSnapshot.bio || "";
+      if (detailsExperience) detailsExperience.value = detailsSnapshot.experience || "";
+      if (detailsCerts) detailsCerts.value = detailsSnapshot.certifications || "";
+      if (detailsSpecs) detailsSpecs.value = detailsSnapshot.specialisations || "";
+      if (detailsSaved) detailsSaved.classList.add("hidden");
+      clearDetailsError();
     }
 
     function resetPreview() {
@@ -264,7 +394,7 @@
       }
       pendingFile = null;
       if (avatarInput) avatarInput.value = "";
-      if (avatarPreview) avatarPreview.hidden = true;
+      if (avatarPreview) avatarPreview.classList.add("hidden");
       if (avatarPreviewImg) avatarPreviewImg.src = DEFAULT_AVATAR;
     }
 
@@ -272,10 +402,60 @@
     if (profileSpecialty) {
       const spec = user?.specialty || "";
       profileSpecialty.textContent = spec;
-      profileSpecialty.hidden = !spec;
+      profileSpecialty.classList.toggle("hidden", !spec);
     }
     setAvatarImage(currentAvatarUrl);
     updateRemoveButton();
+
+    if (detailsReset) {
+      detailsReset.addEventListener("click", () => {
+        resetDetailsForm();
+      });
+    }
+
+    if (detailsForm) {
+      detailsForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearDetailsError();
+
+        if (detailsSave) detailsSave.disabled = true;
+        if (detailsReset) detailsReset.disabled = true;
+        const originalText = detailsSave ? detailsSave.textContent : "";
+        if (detailsSave) detailsSave.textContent = "Saving...";
+
+        const payload = {
+          bio: detailsBio ? detailsBio.value.trim() : "",
+          experience: textToList(detailsExperience ? detailsExperience.value : ""),
+          certifications: textToList(detailsCerts ? detailsCerts.value : ""),
+          specialisations: textToList(detailsSpecs ? detailsSpecs.value : ""),
+        };
+
+        try {
+          const res = await apiFetch("/api/doctor/profile", {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data || data.success !== true) {
+            const msg = data?.error?.message || "Unable to update profile.";
+            showDetailsError(msg);
+            notify(msg, "error");
+          } else {
+            fillDetailsForm(data.data || payload);
+            setDetailsReady();
+            if (detailsSaved) detailsSaved.classList.remove("hidden");
+            notify("Profile updated.", "success");
+          }
+        } catch (err) {
+          showDetailsError("Unable to update profile.");
+          notify("Unable to update profile.", "error");
+        } finally {
+          if (detailsSave) detailsSave.disabled = false;
+          if (detailsReset) detailsReset.disabled = false;
+          if (detailsSave) detailsSave.textContent = originalText || "Save changes";
+        }
+      });
+    }
 
     if (changeAvatarBtn && avatarInput) {
       changeAvatarBtn.addEventListener("click", () => avatarInput.click());
@@ -302,7 +482,7 @@
         pendingFile = file;
         previewUrl = URL.createObjectURL(file);
         if (avatarPreviewImg) avatarPreviewImg.src = previewUrl;
-        if (avatarPreview) avatarPreview.hidden = false;
+        if (avatarPreview) avatarPreview.classList.remove("hidden");
       });
     }
 
@@ -390,7 +570,7 @@
     function setSummaryLoading() {
       show(summaryLoading);
       hide(summaryError);
-      if (summaryCards) summaryCards.hidden = true;
+      if (summaryCards) summaryCards.classList.add("hidden");
     }
 
     function setSummaryError(message) {
@@ -399,13 +579,13 @@
         summaryError.textContent = message;
         show(summaryError);
       }
-      if (summaryCards) summaryCards.hidden = true;
+      if (summaryCards) summaryCards.classList.add("hidden");
     }
 
     function setSummaryData(data) {
       hide(summaryLoading);
       hide(summaryError);
-      if (summaryCards) summaryCards.hidden = false;
+      if (summaryCards) summaryCards.classList.remove("hidden");
       if (summaryToday) summaryToday.textContent = String(data.today ?? 0);
       if (summaryWeek) summaryWeek.textContent = String(data.week ?? 0);
 
@@ -437,6 +617,26 @@
       }
 
       setSummaryData(payload.data);
+    }
+
+    async function loadProfileDetails() {
+      if (!detailsRoot) return;
+      setDetailsLoading();
+
+      const res = await apiFetch("/api/doctor/profile", { method: "GET" });
+      if (!res.ok) {
+        setDetailsError("Unable to load profile details.");
+        return;
+      }
+
+      const payload = await res.json().catch(() => null);
+      if (!payload || payload.success !== true || !payload.data) {
+        setDetailsError("Unable to load profile details.");
+        return;
+      }
+
+      fillDetailsForm(payload.data);
+      setDetailsReady();
     }
 
     function renderAppointments(items) {
@@ -544,18 +744,18 @@
       const body = `
         <div class="dash-form">
           <div class="dash-form__row">
-            <label for="notifyTemplate">Template</label>
-            <select id="notifyTemplate">
-              <option value="reminder">Reminder</option>
-              <option value="change">Change request</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-          <div class="dash-form__row" id="notifyCustomRow" hidden>
+          <label for="notifyTemplate">Template</label>
+          <select id="notifyTemplate">
+            <option value="reminder">Reminder</option>
+            <option value="change">Change request</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+          <div class="dash-form__row hidden" id="notifyCustomRow">
             <label for="notifyCustom">Custom message</label>
             <textarea id="notifyCustom" rows="4" placeholder="Type your message"></textarea>
           </div>
-          <div class="dash-error" id="notifyError" hidden></div>
+          <div class="dash-error hidden" id="notifyError"></div>
         </div>
       `;
 
@@ -576,17 +776,17 @@
       function showError(message) {
         if (!errorBox) return;
         errorBox.textContent = message;
-        errorBox.hidden = false;
+        errorBox.classList.remove("hidden");
       }
 
       function clearError() {
-        if (errorBox) errorBox.hidden = true;
+        if (errorBox) errorBox.classList.add("hidden");
       }
 
       if (templateSelect) {
         templateSelect.addEventListener("change", () => {
           const val = templateSelect.value;
-          if (customRow) customRow.hidden = val !== "custom";
+          if (customRow) customRow.classList.toggle("hidden", val !== "custom");
         });
       }
 
@@ -692,6 +892,7 @@
       });
     }
 
+    loadProfileDetails();
     loadSummary();
     loadAppointments();
   }

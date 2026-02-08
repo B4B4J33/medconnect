@@ -24,6 +24,10 @@ main {
   flex: 1;
 }
 
+.hidden {
+  display: none !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;

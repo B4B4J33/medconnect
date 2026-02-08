@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 import uuid
 from pathlib import Path
@@ -82,6 +83,37 @@ def _serialize_appt(row: dict):
     data.setdefault("patient_phone", row.get("phone"))
     data.setdefault("doctor_name", row.get("doctor"))
     return data
+
+
+def _parse_list_field(raw):
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(v).strip() for v in raw if str(v).strip()]
+    if isinstance(raw, str):
+        val = raw.strip()
+        if not val:
+            return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(v).strip() for v in parsed if str(v).strip()]
+    except Exception:
+        pass
+    if isinstance(raw, str):
+        return [raw.strip()]
+    return []
+
+
+def _normalize_list_input(value):
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    raw = str(value)
+    if not raw.strip():
+        return []
+    return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
 def _log_notify(appointment_id: int, doctor_id: int, template_key: str, sent: bool, error: str = None):
@@ -195,6 +227,104 @@ def doctor_summary():
             "today": today_count,
             "week": week_count,
             "by_status": by_status,
+        },
+    }), 200
+
+
+@doctor_bp.get("/api/doctor/profile")
+def doctor_profile():
+    guard = _require_doctor()
+    if guard:
+        return guard
+
+    doctor_id = _doctor_scope_id()
+    if doctor_id is None:
+        return _error(403, "forbidden", "Forbidden")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM doctors WHERE id = %s LIMIT 1", (doctor_id,))
+            row = cur.fetchone()
+
+    if not row:
+        return _error(404, "not_found", "Doctor not found")
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "id": row.get("id"),
+            "full_name": row.get("full_name"),
+            "specialty": row.get("specialty"),
+            "bio": row.get("bio") or "",
+            "experience": _parse_list_field(row.get("experience")),
+            "certifications": _parse_list_field(row.get("certifications")),
+            "specialisations": _parse_list_field(row.get("specialisations")),
+        },
+    }), 200
+
+
+@doctor_bp.patch("/api/doctor/profile")
+def doctor_update_profile():
+    guard = _require_doctor()
+    if guard:
+        return guard
+
+    doctor_id = _doctor_scope_id()
+    if doctor_id is None:
+        return _error(403, "forbidden", "Forbidden")
+
+    payload = request.get_json(silent=True) or {}
+
+    updates = {}
+    if "bio" in payload:
+        bio = str(payload.get("bio") or "").strip()
+        updates["bio"] = bio or None
+
+    if "experience" in payload:
+        items = _normalize_list_input(payload.get("experience"))
+        updates["experience"] = json.dumps(items) if items else None
+
+    if "certifications" in payload:
+        items = _normalize_list_input(payload.get("certifications"))
+        updates["certifications"] = json.dumps(items) if items else None
+
+    if "specialisations" in payload:
+        items = _normalize_list_input(payload.get("specialisations"))
+        updates["specialisations"] = json.dumps(items) if items else None
+
+    if not updates:
+        return _error(400, "validation_error", "No fields to update")
+
+    fields = []
+    values = []
+    for key, value in updates.items():
+        fields.append(f"{key} = %s")
+        values.append(value)
+    fields.append("updated_at = NOW()")
+    values.append(doctor_id)
+
+    sql = "UPDATE doctors SET " + ", ".join(fields) + " WHERE id = %s RETURNING *;"
+
+    updated = None
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, tuple(values))
+            updated = cur.fetchone()
+        conn.commit()
+
+    if not updated:
+        return _error(404, "not_found", "Doctor not found")
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "id": updated.get("id"),
+            "full_name": updated.get("full_name"),
+            "specialty": updated.get("specialty"),
+            "bio": updated.get("bio") or "",
+            "experience": _parse_list_field(updated.get("experience")),
+            "certifications": _parse_list_field(updated.get("certifications")),
+            "specialisations": _parse_list_field(updated.get("specialisations")),
         },
     }), 200
 

@@ -12,12 +12,12 @@
 
   function show(node) {
     if (!node) return;
-    node.hidden = false;
+    node.classList.remove("hidden");
   }
 
   function hide(node) {
     if (!node) return;
-    node.hidden = true;
+    node.classList.add("hidden");
   }
 
   function sectionEls(root) {
@@ -135,9 +135,9 @@
         </div>
       </div>
       <div class="dash-loading" data-role="loading">Loading...</div>
-      <div class="dash-error" data-role="error" hidden></div>
-      <div class="dash-empty" data-role="empty" hidden>No quote requests found.</div>
-      <div class="table-wrap" data-role="table" hidden>
+      <div class="dash-error hidden" data-role="error"></div>
+      <div class="dash-empty hidden" data-role="empty">No quote requests found.</div>
+      <div class="table-wrap hidden" data-role="table">
         <table class="mc-table">
           <thead>
             <tr>
@@ -332,7 +332,7 @@
             <label for="quoteNotes">Admin notes</label>
             <textarea id="quoteNotes" rows="4">${escapeHtml(details.admin_notes || "")}</textarea>
           </div>
-          <div class="dash-error" id="quoteUpdateError" hidden></div>
+          <div class="dash-error hidden" id="quoteUpdateError"></div>
           ${filesSection}
         </div>
       `;
@@ -353,13 +353,13 @@
       const showError = (msg) => {
         if (errorBox) {
           errorBox.textContent = msg;
-          errorBox.hidden = false;
+          errorBox.classList.remove("hidden");
         }
       };
 
       if (saveBtn) {
         saveBtn.addEventListener("click", async () => {
-          if (errorBox) errorBox.hidden = true;
+        if (errorBox) errorBox.classList.add("hidden");
 
           const status = statusSelect?.value || "";
           const admin_notes = notesInput?.value || "";
