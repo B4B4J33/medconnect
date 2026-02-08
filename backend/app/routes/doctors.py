@@ -159,6 +159,26 @@ def _parse_days_from_row(raw):
     return []
 
 
+def _parse_list_field(raw):
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(v).strip() for v in raw if str(v).strip()]
+    if isinstance(raw, str):
+        val = raw.strip()
+        if not val:
+            return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(v).strip() for v in parsed if str(v).strip()]
+    except Exception:
+        pass
+    if isinstance(raw, str):
+        return [raw.strip()]
+    return []
+
+
 def _serialize_doctor(row: dict, public: bool = False):
     if not row:
         return None
@@ -171,6 +191,10 @@ def _serialize_doctor(row: dict, public: bool = False):
         "availability_days": days,
         "availability_start": _format_time(row.get("availability_start")),
         "availability_end": _format_time(row.get("availability_end")),
+        "bio": row.get("bio"),
+        "experience": _parse_list_field(row.get("experience")),
+        "certifications": _parse_list_field(row.get("certifications")),
+        "specialisations": _parse_list_field(row.get("specialisations")),
     }
     if public:
         return data
@@ -237,6 +261,14 @@ def list_doctors():
 
     items = [_serialize_doctor(r, public=True) for r in (rows or [])]
     return success_response({"count": len(items), "items": items})
+
+
+@doctors_bp.get("/api/doctors/<int:doctor_id>")
+def get_doctor_public(doctor_id: int):
+    row = _fetch_doctor_row(doctor_id)
+    if not row or not row.get("is_active"):
+        return _error(404, "not_found", "Doctor not found")
+    return success_response(_serialize_doctor(row, public=True))
 
 
 @doctors_bp.route("/api/admin/doctors", methods=["GET"])

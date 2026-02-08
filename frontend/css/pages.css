@@ -315,6 +315,17 @@
   color: var(--muted);
 }
 
+.doctor-card__actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.doctor-card__actions .btn {
+  padding: 10px 18px;
+}
+
 /* Desktop layout */
 @media (min-width: 769px) {
   .doctors-list {

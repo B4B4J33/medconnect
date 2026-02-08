@@ -248,5 +248,20 @@
   "dashboard_nav_quotes": "Quote Requests",
   "dashboard_load_appointments_error": "Unable to load appointments.",
   "dashboard_load_reports_error": "Unable to load lab reports.",
-  "dashboard_appt_details": "Appointment details"
+  "dashboard_appt_details": "Appointment details",
+  "doc_profile_page_title": "Doctor Profile - MedConnect",
+  "doc_profile_working_hours": "Working hours",
+  "doc_profile_professional_details": "Professional details",
+  "doc_profile_experience": "Experience",
+  "doc_profile_certifications": "Certifications",
+  "doc_profile_specialisations": "Specialisations",
+  "doc_profile_about": "About",
+  "doc_profile_book": "Book appointment",
+  "doc_profile_cta_title": "Ready to book?",
+  "doc_profile_cta_body": "Schedule an appointment with this doctor in minutes.",
+  "doc_profile_not_found": "Doctor not found",
+  "doc_profile_not_found_body": "We couldn't find this doctor profile. Please return to the doctors page.",
+  "doc_profile_back": "Back to doctors",
+  "doc_profile_not_specified": "Not specified",
+  "doc_profile_unknown": "Doctor"
 }

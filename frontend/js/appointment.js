@@ -6,6 +6,9 @@
   const DRAFT_KEY = "mc_appointment_draft_v1";
   const SLOT_MINUTES = 60;
   const DEFAULT_WINDOWS = ["09:00-12:00", "13:00-16:00"];
+  const urlParams = new URLSearchParams(window.location.search);
+  const preselectDoctorId = urlParams.get("doctor_id") || urlParams.get("doctor");
+  const preselectSpecialty = urlParams.get("specialty");
 
   const el = {
     form: document.getElementById("appointmentForm"),
@@ -30,6 +33,7 @@
   let availabilityCache = new Map();
 
   let specialtyToDoctors = new Map();
+  let allDoctors = [];
 
   async function apiFetch(path, opts = {}) {
     if (!api?.hasBase?.()) {
@@ -175,6 +179,15 @@
     const raw = attr || val(el.doctor);
     const parsed = parseInt(raw, 10);
     return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  function findDoctorById(id) {
+    const target = Number.parseInt(id, 10);
+    if (!Number.isFinite(target)) return null;
+    return allDoctors.find((d) => {
+      const raw = d.id ?? d.doctor_id;
+      return Number.parseInt(raw, 10) === target;
+    }) || null;
   }
 
   function getDoctorLabel() {
@@ -326,6 +339,7 @@
       ? data.doctors
       : [];
 
+    allDoctors = list;
     specialtyToDoctors = new Map();
 
     list.forEach((d) => {
@@ -345,6 +359,38 @@
         .map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`)
         .join("")
     );
+  }
+
+  function applyUrlPrefill() {
+    const hasDoctorId = !!preselectDoctorId;
+    let specialty = preselectSpecialty || "";
+
+    if (hasDoctorId && !specialty) {
+      const doctor = findDoctorById(preselectDoctorId);
+      if (doctor?.specialty) {
+        specialty = String(doctor.specialty);
+      }
+    }
+
+    if (specialty && el.specialty) {
+      setVal(el.specialty, specialty);
+      onSpecialtyChange();
+    }
+
+    if (hasDoctorId && el.doctor) {
+      const opts = Array.from(el.doctor.options || []);
+      const match = opts.find(
+        (o) => String(o.getAttribute("data-doctor-id") || "") === String(preselectDoctorId)
+      );
+      if (match) {
+        el.doctor.value = match.value;
+        el.doctor.disabled = false;
+      }
+    }
+
+    if (hasDoctorId || specialty) {
+      refreshTimeSlots();
+    }
   }
 
   async function fetchWeeklyAvailability(doctorId) {
@@ -643,6 +689,10 @@
       applyTimeIfAvailable(draft.time);
 
       buildReview();
+    }
+
+    if (preselectDoctorId || preselectSpecialty) {
+      applyUrlPrefill();
     }
 
     skipPatientStep = normRole(loggedUser?.role) === "patient";

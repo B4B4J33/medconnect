@@ -80,7 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const specialty = escapeHtml(d.specialty);
 
       const bookUrl =
-        `appointment.html?specialty=${encodeURIComponent(d.specialty)}&doctor=${id}`;
+        `appointment.html?specialty=${encodeURIComponent(d.specialty)}&doctor_id=${id}`;
+      const profileUrl = `doctor-profile.html?doctor_id=${id}`;
 
       const avatarUrl = resolveAvatarUrl(d.avatar_url);
 
@@ -89,7 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
           <img src="${avatarUrl}" alt="${name}" class="doctor-photo" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';">
           <h3>${name}</h3>
           <p>${specialty}</p>
-          <a href="${bookUrl}" class="btn primary">Book</a>
+          <div class="doctor-card__actions">
+            <a href="${profileUrl}" class="btn ghost">${t("btn_view_profile", "View Profile")}</a>
+            <a href="${bookUrl}" class="btn primary">${t("btn_book", "Book")}</a>
+          </div>
         </article>
       `;
     }).join("");

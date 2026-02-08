@@ -248,5 +248,20 @@
   "dashboard_nav_quotes": "Demandes de devis",
   "dashboard_load_appointments_error": "Impossible de charger les rendez-vous.",
   "dashboard_load_reports_error": "Impossible de charger les rapports de laboratoire.",
-  "dashboard_appt_details": "Détails du rendez-vous"
+  "dashboard_appt_details": "Détails du rendez-vous",
+  "doc_profile_page_title": "Profil du médecin - MedConnect",
+  "doc_profile_working_hours": "Horaires de consultation",
+  "doc_profile_professional_details": "Détails professionnels",
+  "doc_profile_experience": "Expérience",
+  "doc_profile_certifications": "Certifications",
+  "doc_profile_specialisations": "Spécialisations",
+  "doc_profile_about": "À propos",
+  "doc_profile_book": "Prendre rendez-vous",
+  "doc_profile_cta_title": "Prêt à réserver ?",
+  "doc_profile_cta_body": "Planifiez un rendez-vous avec ce médecin en quelques minutes.",
+  "doc_profile_not_found": "Médecin introuvable",
+  "doc_profile_not_found_body": "Nous n'avons pas trouvé ce profil de médecin. Retournez à la page des médecins.",
+  "doc_profile_back": "Retour aux médecins",
+  "doc_profile_not_specified": "Non renseigné",
+  "doc_profile_unknown": "Médecin"
 }
